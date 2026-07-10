@@ -23,6 +23,8 @@ regional_cluster:
   enable_bastion: true
   enable_write_sre_tools: true
   node_instance_families: ["m8i-flex", "m7i-flex"]
+  enable_sre_tools_gateway: true
+  enable_sre_public_access: true
 
 management_cluster_defaults:
   enable_bastion: true
