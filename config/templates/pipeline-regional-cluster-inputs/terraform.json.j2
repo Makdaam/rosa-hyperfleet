@@ -15,6 +15,10 @@
   "enable_api_custom_domain": {{ regional_cluster.enable_api_custom_domain | default(false) | tojson }},
   "zone_shard_count": {{ regional_cluster.zone_shard_count | default(1) | tojson }},
   "enable_sns_alerting": {{ observability.sns_alerting.enabled | default(false) | tojson }},
+  "enable_sre_tools_gateway": {{ regional_cluster.enable_sre_tools_gateway | default(false) | tojson }},
+  "enable_sre_public_access": {{ regional_cluster.enable_sre_public_access | default(false) | tojson }},
+  "sre_allowed_source_cidrs": {{ regional_cluster.sre_allowed_source_cidrs | default([]) | tojson }},
+  "environment_domain": {{ dns.domain | default(None) | tojson }},
   "regional_id": "{% if eph_prefix %}{{ eph_prefix }}-regional{% else %}regional{% endif %}",
   "eph_prefix": "{{ eph_prefix | default('') }}",
   "iot_log_level": {{ applications['regional-cluster'].maestro.iotLogLevel | default('WARN') | tojson }}

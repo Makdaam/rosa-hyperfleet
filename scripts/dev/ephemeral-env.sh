@@ -42,6 +42,7 @@ usage() {
     echo "  shell           Interactive shell for Platform API access"
     echo "  bastion         Connect to RC/MC bastion in an ephemeral env"
     echo "  port-forward    Forward ports through RC/MC bastion in an ephemeral env"
+  echo "  sre-ui          Tunnel SRE UI tools through the internal ALB via bastion"
     echo "  e2e             Run e2e tests against an ephemeral env"
     echo "  collect-logs    Collect kubernetes logs from RC/MC in an ephemeral env"
 }
@@ -1087,8 +1088,74 @@ case "${1:-help}" in
     list) cmd_list; exit 0 ;;
 esac
 
+cmd_sre_tunnel() {
+    local local_port=4443
+
+    bastion_setup "regional"
+
+    local runtime_id
+    runtime_id=$(aws ecs describe-tasks \
+        --cluster "$ecs_cluster" \
+        --tasks "$task_id" \
+        --query 'tasks[0].containers[?name==`bastion`].runtimeId | [0]' \
+        --output text)
+    [[ -n "$runtime_id" && "$runtime_id" != "None" ]] \
+        || die "runtime_id not found for task '$task_id' in cluster '$ecs_cluster'"
+
+    local target="ecs:${ecs_cluster}_${task_id}_${runtime_id}"
+
+    # Retrieve ALB DNS and SRE domain from the in-cluster secret via bastion
+    echo "==> Fetching SRE gateway info from cluster..."
+    local raw
+    raw=$(aws ecs execute-command \
+        --cluster "$ecs_cluster" \
+        --task "$task_id" \
+        --container bastion \
+        --interactive \
+        --command "sh -c \"echo SRE_ALB=\$(kubectl get secret in-cluster -n argocd -o jsonpath='{.data.sre_alb_dns_name}' | base64 -d); echo SRE_DOMAIN=\$(kubectl get secret in-cluster -n argocd -o jsonpath='{.data.sre_domain}' | base64 -d)\"" 2>/dev/null || true)
+
+    local alb_dns sre_domain
+    alb_dns=$(echo "$raw" | grep -o 'SRE_ALB=.*' | cut -d= -f2 | tr -d '[:space:]')
+    sre_domain=$(echo "$raw" | grep -o 'SRE_DOMAIN=.*' | cut -d= -f2 | tr -d '[:space:]')
+
+    [[ -n "$alb_dns" ]] || die "Could not retrieve SRE ALB DNS. Is the SRE gateway deployed?"
+    [[ -n "$sre_domain" ]] || die "Could not retrieve SRE domain."
+
+    _prev_trap=$(trap -p EXIT | sed "s/^trap -- '//;s/' EXIT$//")
+    cleanup() {
+        echo ""; echo "Closing SRE UI tunnel..."
+        kill "$ssm_pid" 2>/dev/null || true
+        eval "$_prev_trap"
+    }
+    trap cleanup EXIT
+
+    echo "==> [local] SSM tunnel localhost:${local_port} -> ${alb_dns}:443"
+    aws ssm start-session \
+        --target "$target" \
+        --document-name AWS-StartPortForwardingSessionToRemoteHost \
+        --parameters "{\"host\":[\"${alb_dns}\"],\"portNumber\":[\"443\"],\"localPortNumber\":[\"${local_port}\"]}" &
+    ssm_pid=$!
+    sleep 3
+
+    echo ""
+    echo "==> SRE UI tunnel active"
+    echo ""
+    echo "Add these lines to /etc/hosts (requires sudo):"
+    for tool in grafana argocd prometheus thanos loki; do
+        printf "    127.0.0.1  %s.%s\n" "$tool" "$sre_domain"
+    done
+    echo ""
+    echo "Then open (note: port ${local_port}, not 443):"
+    for tool in grafana argocd prometheus thanos loki; do
+        printf "    https://%s.%s:%s\n" "$tool" "$sre_domain" "$local_port"
+    done
+    echo ""
+    echo "Press Ctrl+C to close the tunnel."
+    wait "$ssm_pid"
+}
+
 case "${1:-help}" in
-    bastion|collect-logs)
+    bastion|collect-logs|sre-ui)
         for tool in jq uv aws; do
             command -v "$tool" >/dev/null 2>&1 || die "Missing required tool: $tool"
         done
@@ -1117,6 +1184,7 @@ case "${1:-help}" in
     shell)          cmd_shell ;;
     bastion)        shift; cmd_bastion_interactive "$@" ;;
     port-forward)   shift; cmd_bastion_port_forward "$@" ;;
+    sre-ui)         cmd_sre_tunnel ;;
     e2e)            cmd_e2e ;;
     collect-logs)   shift; cmd_collect_logs "$@" ;;
     help|*)

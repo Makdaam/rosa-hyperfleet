@@ -106,6 +106,26 @@ spec:
                   bucketNames:
                     chunks: '{{ '{{ .metadata.labels.cluster_name }}' }}-loki-logs-{{ '{{ .metadata.annotations.aws_account_id }}' }}'
                     ruler: '{{ '{{ .metadata.labels.cluster_name }}' }}-loki-logs-{{ '{{ .metadata.annotations.aws_account_id }}' }}'
+            # SRE UI ALB target group ARNs (empty when enable_sre_tools_gateway = false)
+            grafana:
+              sre:
+                targetGroup:
+                  arn: '{{ '{{ .metadata.annotations.sre_grafana_target_group_arn }}' }}'
+            argo-cd:
+              sre:
+                targetGroup:
+                  arn: '{{ '{{ .metadata.annotations.sre_argocd_target_group_arn }}' }}'
+            monitoring:
+              sre:
+                targetGroup:
+                  arn: '{{ '{{ .metadata.annotations.sre_prometheus_target_group_arn }}' }}'
+            thanos:
+              sre:
+                queryTargetGroup:
+                  arn: '{{ '{{ .metadata.annotations.sre_thanos_target_group_arn }}' }}'
+            platform:
+              sreQueryFrontendTargetGroup:
+                arn: '{{ '{{ .metadata.annotations.sre_loki_target_group_arn }}' }}'
             hyperfleetApi:
               aws:
                 region: '{{ '{{ .metadata.labels.aws_region }}' }}'

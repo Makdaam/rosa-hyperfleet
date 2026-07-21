@@ -79,6 +79,9 @@ export TF_VAR_enable_cloudtrail=$(parseBool '.enable_cloudtrail' false "$DEPLOY_
 export TF_VAR_enable_api_custom_domain=$(parseBool '.enable_api_custom_domain' false "$DEPLOY_CONFIG_FILE")
 export TF_VAR_zone_shard_count=$(jq -r '.zone_shard_count // 1' "$DEPLOY_CONFIG_FILE")
 export TF_VAR_enable_sns_alerting=$(parseBool '.enable_sns_alerting' false "$DEPLOY_CONFIG_FILE")
+export TF_VAR_enable_sre_tools_gateway=$(parseBool '.enable_sre_tools_gateway' false "$DEPLOY_CONFIG_FILE")
+export TF_VAR_enable_sre_public_access=$(parseBool '.enable_sre_public_access' false "$DEPLOY_CONFIG_FILE")
+export TF_VAR_sre_allowed_source_cidrs=$(jq -c '.sre_allowed_source_cidrs // []' "$DEPLOY_CONFIG_FILE")
 
 # MC OU path from SSM (provisioned by account-minter, required for OIDC bucket policy)
 TF_VAR_mc_ou_path=$(aws ssm get-parameter \

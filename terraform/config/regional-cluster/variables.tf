@@ -105,6 +105,24 @@ variable "enable_api_custom_domain" {
   default     = false
 }
 
+variable "enable_sre_tools_gateway" {
+  description = "Enable internal ALB for SRE UI tools (Grafana, ArgoCD, Prometheus, Thanos, Loki). Requires environment_domain to be set for DNS/TLS."
+  type        = bool
+  default     = false
+}
+
+variable "enable_sre_public_access" {
+  description = "When true, the SRE UI ALB is internet-facing. Combine with sre_allowed_source_cidrs to restrict access."
+  type        = bool
+  default     = false
+}
+
+variable "sre_allowed_source_cidrs" {
+  description = "When SRE ALB is internet-facing, allow HTTPS only from these CIDRs (e.g. corporate proxy egress). Leave empty to allow all."
+  type        = list(string)
+  default     = []
+}
+
 variable "enable_sns_alerting" {
   description = "Enable SNS alerting for alert fan-out"
   type        = bool
