@@ -27,6 +27,11 @@ output "nat_gateway_ids" {
   value       = aws_nat_gateway.main[*].id
 }
 
+output "nat_gateway_public_ips" {
+  description = "Public Elastic IPs of NAT Gateways - used to restrict cross-account NLB ingress"
+  value       = aws_eip.nat[*].public_ip
+}
+
 output "cluster_security_group_id" {
   description = "Security group ID for EKS cluster control plane"
   value       = aws_security_group.eks_cluster.id

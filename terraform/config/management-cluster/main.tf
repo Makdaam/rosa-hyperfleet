@@ -187,3 +187,22 @@ module "kube_applier" {
   rc_aws_account_id = var.regional_aws_account_id
   aws_region        = var.region
 }
+
+# =============================================================================
+# MC SRE UI (optional)
+#
+# Internet-facing NLB with static Elastic IPs exposing ArgoCD and Prometheus
+# to the RC SRE UI ALB for cross-account path-based routing.
+# =============================================================================
+
+module "mc_sre_ui" {
+  count  = var.enable_mc_sre_ui ? 1 : 0
+  source = "../../modules/mc-sre-ui"
+
+  management_id          = var.management_id
+  vpc_id                 = module.vpc.vpc_id
+  public_subnet_ids      = module.vpc.public_subnet_ids
+  node_security_group_id = module.management_cluster.node_security_group_id
+  cluster_name           = module.management_cluster.cluster_name
+  rc_nat_gateway_eips    = var.rc_nat_gateway_eips
+}

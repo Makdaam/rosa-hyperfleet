@@ -139,3 +139,15 @@ variable "oidc_cloudfront_domain" {
   default     = ""
 }
 
+variable "enable_mc_sre_ui" {
+  description = "Enable the MC SRE UI NLB exposing ArgoCD and Prometheus to the RC SRE UI ALB."
+  type        = bool
+  default     = false
+}
+
+variable "rc_nat_gateway_eips" {
+  description = "Public Elastic IPs of the RC VPC's NAT Gateways. NLB ingress is restricted to these. Required when enable_mc_monitoring_gateway = true."
+  type        = list(string)
+  default     = []
+}
+

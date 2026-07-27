@@ -166,3 +166,18 @@ output "kube_applier_role_arn" {
   description = "IAM role ARN for the kube-applier-aws controller"
   value       = module.kube_applier.kube_applier_role_arn
 }
+
+output "sre_mc_eips" {
+  description = "Public Elastic IPs of the MC SRE UI NLB - used as static targets in the RC SRE UI ALB"
+  value       = try(module.mc_sre_ui[0].eip_public_ips, [])
+}
+
+output "sre_mc_argocd_target_group_arn" {
+  description = "ARN of the ArgoCD NLB target group in the MC SRE UI"
+  value       = try(module.mc_sre_ui[0].argocd_target_group_arn, "")
+}
+
+output "sre_mc_prometheus_target_group_arn" {
+  description = "ARN of the Prometheus NLB target group in the MC SRE UI"
+  value       = try(module.mc_sre_ui[0].prometheus_target_group_arn, "")
+}
