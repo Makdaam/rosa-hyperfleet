@@ -120,6 +120,18 @@ regional_cluster:
   # @doc regional_cluster.sre_thanos_oidc_client_id OIDC client ID for Thanos. Required when enable_sre_oidc_auth is true.
   # @used-by regional_cluster.sre_thanos_oidc_client_id pipeline-regional-cluster-inputs/terraform.json.j2
   sre_thanos_oidc_client_id: ""
+  # @doc regional_cluster.enable_rc_mc_sre_ui Enable the RC MC SRE UI ALB providing path-based access to ArgoCD and Prometheus on each MC.
+  # @used-by regional_cluster.enable_rc_mc_sre_ui pipeline-regional-cluster-inputs/terraform.json.j2
+  enable_rc_mc_sre_ui: false
+  # @doc regional_cluster.rc_mc_sre_ui_prefix Hostname prefix for the MC SRE UI ALB. Composes to {prefix}.sre.{deployment_name}.{domain}.
+  # @used-by regional_cluster.rc_mc_sre_ui_prefix pipeline-regional-cluster-inputs/terraform.json.j2
+  rc_mc_sre_ui_prefix: "mc"
+  # @doc regional_cluster.enable_rc_mc_sre_ui_oidc Enable OIDC authentication on the MC SRE UI ALB.
+  # @used-by regional_cluster.enable_rc_mc_sre_ui_oidc pipeline-regional-cluster-inputs/terraform.json.j2
+  enable_rc_mc_sre_ui_oidc: false
+  # @doc regional_cluster.rc_mc_sre_ui_oidc_client_id OIDC client ID for the MC SRE UI ALB. Required when enable_rc_mc_sre_ui_oidc is true.
+  # @used-by regional_cluster.rc_mc_sre_ui_oidc_client_id pipeline-regional-cluster-inputs/terraform.json.j2
+  rc_mc_sre_ui_oidc_client_id: ""
 
 management_cluster_defaults:
   # @doc management_cluster_defaults.enable_bastion Default enable bastion for management clusters.

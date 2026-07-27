@@ -140,6 +140,48 @@ if [ -z "${TF_VAR_mc_ou_path}" ]; then
 fi
 export TF_VAR_mc_ou_path
 
+# RC MC SRE UI - read MC NLB EIPs from RC SSM (written by each MC pipeline after apply)
+TF_VAR_enable_rc_mc_sre_ui=$(parseBool '.enable_rc_mc_sre_ui' false "$DEPLOY_CONFIG_FILE")
+export TF_VAR_enable_rc_mc_sre_ui
+TF_VAR_rc_mc_sre_ui_prefix=$(jq -r '.rc_mc_sre_ui_prefix // "mc"' "$DEPLOY_CONFIG_FILE")
+export TF_VAR_rc_mc_sre_ui_prefix
+
+if [ "$TF_VAR_enable_rc_mc_sre_ui" = "true" ]; then
+    _MC_INFO=$(jq -c '.management_clusters_info // []' "$DEPLOY_CONFIG_FILE")
+    _ENDPOINTS="{}"
+    for _ENTRY in $(echo "$_MC_INFO" | jq -r '.[] | @base64'); do
+        _MC_ID=$(echo "$_ENTRY" | base64 -d | jq -r '.id')
+        _EIPS=$(aws ssm get-parameter \
+            --name "/infra/${_MC_ID}/sre-mc-eips" \
+            --query 'Parameter.Value' \
+            --output text \
+            --region "${TARGET_REGION}" 2>/dev/null || echo "[]")
+        if [ "${_EIPS}" != "[]" ] && [ -n "${_EIPS}" ]; then
+            _ENDPOINTS=$(echo "${_ENDPOINTS}" | jq --arg mc "${_MC_ID}" --argjson eips "${_EIPS}" \
+                '. + {($mc): {"eips": $eips}}')
+        fi
+    done
+    TF_VAR_rc_mc_sre_ui_endpoints="${_ENDPOINTS}"
+    export TF_VAR_rc_mc_sre_ui_endpoints
+
+    TF_VAR_enable_rc_mc_sre_ui_oidc=$(parseBool '.enable_rc_mc_sre_ui_oidc' false "$DEPLOY_CONFIG_FILE")
+    export TF_VAR_enable_rc_mc_sre_ui_oidc
+    if [ "$TF_VAR_enable_rc_mc_sre_ui_oidc" = "true" ]; then
+        TF_VAR_rc_mc_sre_ui_oidc_client_id=$(jq -r '.rc_mc_sre_ui_oidc_client_id // ""' "$DEPLOY_CONFIG_FILE")
+        export TF_VAR_rc_mc_sre_ui_oidc_client_id
+        TF_VAR_rc_mc_sre_ui_oidc_client_secret=$(aws secretsmanager get-secret-value \
+            --secret-id "mc-sre-ui/oidc-client-secret" \
+            --region "${TARGET_REGION}" \
+            --query SecretString \
+            --output text 2>/dev/null || true)
+        if [ -z "${TF_VAR_rc_mc_sre_ui_oidc_client_secret}" ]; then
+            echo "ERROR: Secrets Manager secret 'mc-sre-ui/oidc-client-secret' not found in account ${TARGET_ACCOUNT_ID} region ${TARGET_REGION}" >&2
+            exit 1
+        fi
+        export TF_VAR_rc_mc_sre_ui_oidc_client_secret
+    fi
+fi
+
 if [ -n "${ENVIRONMENT_DOMAIN:-}" ]; then
     export TF_VAR_environment_domain="${ENVIRONMENT_DOMAIN}"
 fi

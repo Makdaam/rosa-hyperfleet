@@ -60,6 +60,7 @@ else
         TF_VAR_oidc_bucket_arn=$(cd "$_RC_TF_DIR" && terraform output -raw oidc_bucket_arn 2>/dev/null || true)
         TF_VAR_oidc_bucket_region=$(cd "$_RC_TF_DIR" && terraform output -raw oidc_bucket_region 2>/dev/null || true)
         TF_VAR_rhobs_api_url=$(cd "$_RC_TF_DIR" && terraform output -raw rhobs_api_url 2>/dev/null || true)
+        TF_VAR_rc_nat_gateway_eips=$(cd "$_RC_TF_DIR" && terraform output -json nat_gateway_public_ips 2>/dev/null || echo "[]")
         if [ -n "${TF_VAR_oidc_cloudfront_domain}" ] && \
            [ -n "${TF_VAR_oidc_bucket_name}" ] && \
            [ -n "${TF_VAR_oidc_bucket_arn}" ] && \
@@ -78,7 +79,7 @@ else
         echo "ERROR: RC outputs missing after $((_OIDC_MAX_RETRIES * _OIDC_RETRY_DELAY / 60))+ minutes" >&2
         exit 1
     fi
-    export TF_VAR_oidc_cloudfront_domain TF_VAR_oidc_bucket_name TF_VAR_oidc_bucket_arn TF_VAR_oidc_bucket_region TF_VAR_rhobs_api_url
+    export TF_VAR_oidc_cloudfront_domain TF_VAR_oidc_bucket_name TF_VAR_oidc_bucket_arn TF_VAR_oidc_bucket_region TF_VAR_rhobs_api_url TF_VAR_rc_nat_gateway_eips
 
     # ZOA outputs bucket ARN
     export TF_VAR_zoa_outputs_bucket_arn=$(cd "$_RC_TF_DIR" && terraform output -raw zoa_bucket_arn 2>/dev/null || echo "")
@@ -142,5 +143,22 @@ set -e
 
 if [ $TERRAFORM_STATUS -ne 0 ]; then
     exit $TERRAFORM_STATUS
+fi
+
+# ── Phase 3: Publish MC SRE UI EIPs to RC account SSM ────────────────────────
+# The RC MC SRE UI ALB targets these EIPs. Publishing to RC SSM allows the RC
+# pipeline to read them without cross-account S3 access to the MC state bucket.
+if [ "${TERRAFORM_ACTION}" == "apply" ]; then
+    _MC_SRE_EIPS=$(terraform output -json sre_mc_eips 2>/dev/null || echo "[]")
+    if [ "${_MC_SRE_EIPS}" != "[]" ] && [ -n "${_MC_SRE_EIPS}" ]; then
+        use_rc_account
+        aws ssm put-parameter \
+            --name "/infra/${MANAGEMENT_ID}/sre-mc-eips" \
+            --value "${_MC_SRE_EIPS}" \
+            --type String \
+            --overwrite \
+            --region "${TARGET_REGION}" 2>/dev/null || \
+            echo "WARNING: failed to write MC SRE UI EIPs to RC SSM — RC pipeline will use empty endpoints"
+    fi
 fi
 
