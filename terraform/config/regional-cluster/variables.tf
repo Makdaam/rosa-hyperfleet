@@ -187,6 +187,45 @@ variable "sre_thanos_oidc_client_secret" {
   sensitive   = true
 }
 
+variable "enable_rc_mc_sre_ui" {
+  description = "Enable the RC MC SRE UI ALB providing path-based access to ArgoCD and Prometheus on each MC."
+  type        = bool
+  default     = false
+}
+
+variable "rc_mc_sre_ui_prefix" {
+  description = "Hostname prefix for the MC SRE UI ALB. Composes to {prefix}.sre.{deployment_name}.{domain}."
+  type        = string
+  default     = "mc"
+}
+
+variable "rc_mc_sre_ui_endpoints" {
+  description = "Map of MC IDs to their NLB Elastic IPs. Populated from MC Terraform outputs at pipeline time."
+  type = map(object({
+    eips = list(string)
+  }))
+  default = {}
+}
+
+variable "enable_rc_mc_sre_ui_oidc" {
+  description = "Enable OIDC authentication on the MC SRE UI ALB."
+  type        = bool
+  default     = false
+}
+
+variable "rc_mc_sre_ui_oidc_client_id" {
+  description = "OIDC client ID for the MC SRE UI ALB. Required when enable_rc_mc_sre_ui_oidc = true."
+  type        = string
+  default     = ""
+}
+
+variable "rc_mc_sre_ui_oidc_client_secret" {
+  description = "OIDC client secret for the MC SRE UI ALB. Fetched from Secrets Manager at pipeline time."
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
 variable "enable_sns_alerting" {
   description = "Enable SNS alerting for alert fan-out"
   type        = bool

@@ -290,6 +290,38 @@ module "sre_ui_alb" {
 
 }
 
+# =============================================================================
+# RC MC SRE UI (optional)
+#
+# Internet-facing ALB with OIDC and path-based routing forwarding to the MC
+# SRE UI NLBs. Exposes ArgoCD and Prometheus on each MC at:
+#   /{mc_id}/argocd/*    -> MC NLB:8080
+#   /{mc_id}/prometheus/* -> MC NLB:9090
+# =============================================================================
+
+module "rc_mc_sre_ui" {
+  count  = var.enable_rc_mc_sre_ui ? 1 : 0
+  source = "../../modules/rc-mc-sre-ui"
+
+  regional_id          = var.regional_id
+  vpc_id               = module.vpc.vpc_id
+  vpc_cidr             = module.vpc.vpc_cidr
+  public_subnet_ids    = module.vpc.public_subnet_ids
+  allowed_source_cidrs = var.sre_allowed_source_cidrs
+
+  regional_hosted_zone_id = var.environment_domain != null ? aws_route53_zone.regional[0].zone_id : null
+  deployment_name         = var.deployment_name
+  environment_domain      = var.environment_domain
+  mc_prefix               = var.rc_mc_sre_ui_prefix
+
+  mc_endpoints = var.rc_mc_sre_ui_endpoints
+
+  oidc_enabled       = var.enable_rc_mc_sre_ui_oidc
+  oidc_issuer_url    = var.sre_oidc_issuer_url
+  oidc_client_id     = var.rc_mc_sre_ui_oidc_client_id
+  oidc_client_secret = var.rc_mc_sre_ui_oidc_client_secret
+}
+
 module "rhobs_api_gateway" {
   source = "../../modules/rhobs-api-gateway"
 
