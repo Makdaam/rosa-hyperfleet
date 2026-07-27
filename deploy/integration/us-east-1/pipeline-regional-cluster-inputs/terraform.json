@@ -29,12 +29,12 @@
   "enable_rc_mc_sre_ui_oidc": false,
   "rc_mc_sre_ui_oidc_client_id": "",
   "environment_domain": "int0.rosa.devshift.net",
-  "regional_id": "regional",
-  "eph_prefix": "",
+  "regional_id": "eph-5b0c15ad-regional",
+  "eph_prefix": "eph-5b0c15ad",
   "hyperfleet_db_instance_class": "db.r6g.large",
   "hyperfleet_db_deletion_protection": true,
   "hyperfleet_db_skip_final_snapshot": false,
   "hyperfleet_db_performance_insights_enabled": true,
   "hyperfleet_db_monitoring_interval": 60,
-  "management_clusters_info": [{"account_id": "ssm:///infra/integration/us-east-1/mc01/account_id", "id": "mc01"}]
+  "management_clusters_info": [{"account_id": "ssm:///infra/integration/us-east-1/mc01/account_id", "id": "eph-5b0c15ad-mc01"}]
 }
