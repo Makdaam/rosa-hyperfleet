@@ -1,3 +1,9 @@
+# MC SRE UI - injected at runtime by ApplicationSet; empty when ALB is not deployed
+mcSreUi:
+  managementId: ""
+  prometheusTargetGroupArn: ""
+  argocdTargetGroupArn: ""
+
 kube-prometheus-stack:
   nameOverride: "monitoring"
   namespaceOverride: "monitoring"

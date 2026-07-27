@@ -155,7 +155,13 @@ argo-cd:
     params:
       server.insecure: false
 
-  # SRE UI ALB — injected at runtime by ApplicationSet; empty when ALB is not deployed
+  # SRE UI ALB - injected at runtime by ApplicationSet; empty when ALB is not deployed
   sre:
     targetGroup:
       arn: ""
+
+# MC SRE UI - injected at runtime by ApplicationSet; empty when ALB is not deployed
+mcSreUi:
+  managementId: ""
+  argocdTargetGroupArn: ""
+  prometheusTargetGroupArn: ""

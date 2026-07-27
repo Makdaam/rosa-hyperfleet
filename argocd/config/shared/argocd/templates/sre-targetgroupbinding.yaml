@@ -11,3 +11,17 @@ spec:
   targetGroupARN: {{ index .Values "argo-cd" "sre" "targetGroup" "arn" | quote }}
   targetType: ip
 {{- end }}
+---
+{{- if .Values.mcSreUi.argocdTargetGroupArn }}
+apiVersion: eks.amazonaws.com/v1
+kind: TargetGroupBinding
+metadata:
+  name: argocd-server-mc-sre
+  namespace: argocd
+spec:
+  serviceRef:
+    name: argocd-server
+    port: 443
+  targetGroupARN: {{ .Values.mcSreUi.argocdTargetGroupArn | quote }}
+  targetType: ip
+{{- end }}

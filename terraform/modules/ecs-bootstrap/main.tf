@@ -198,6 +198,7 @@ resource "aws_ecs_task_definition" "bootstrap" {
               aws_region: "$AWS_REGION"
               cluster_type: "$CLUSTER_TYPE"
               cluster_name: "$CLUSTER_NAME"
+              management_id: "$MANAGEMENT_ID"
             annotations:
               git_repo: "$REPOSITORY_URL"
               git_revision: "$REPOSITORY_BRANCH"
@@ -225,6 +226,8 @@ resource "aws_ecs_task_definition" "bootstrap" {
               sre_thanos_target_group_arn: "$SRE_THANOS_TARGET_GROUP_ARN"
               sre_alb_dns_name: "$SRE_ALB_DNS_NAME"
               sre_domain: "$SRE_DOMAIN"
+              sre_mc_argocd_target_group_arn: "$SRE_MC_ARGOCD_TARGET_GROUP_ARN"
+              sre_mc_prometheus_target_group_arn: "$SRE_MC_PROMETHEUS_TARGET_GROUP_ARN"
           type: Opaque
           stringData:
             name: in-cluster

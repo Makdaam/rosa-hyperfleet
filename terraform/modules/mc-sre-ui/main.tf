@@ -121,7 +121,7 @@ resource "aws_lb_target_group" "argocd" {
   health_check {
     enabled             = true
     protocol            = "HTTPS"
-    path                = "/healthz"
+    path                = "/${var.management_id}/argocd/healthz"
     port                = "traffic-port"
     healthy_threshold   = 2
     unhealthy_threshold = 3
@@ -144,7 +144,7 @@ resource "aws_lb_target_group" "prometheus" {
   health_check {
     enabled             = true
     protocol            = "HTTP"
-    path                = "/-/ready"
+    path                = "/${var.management_id}/prometheus/-/ready"
     port                = "traffic-port"
     healthy_threshold   = 2
     unhealthy_threshold = 3

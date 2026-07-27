@@ -112,6 +112,22 @@ spec:
                   bucketNames:
                     chunks: '{{ .metadata.labels.cluster_name }}-loki-logs-{{ .metadata.annotations.aws_account_id }}'
                     ruler: '{{ .metadata.labels.cluster_name }}-loki-logs-{{ .metadata.annotations.aws_account_id }}'
+            # MC SRE UI: target group ARNs and path prefix for path-based routing
+            # via the RC MC SRE UI ALB. Only applied on management-cluster type.
+            mcSreUi:
+              managementId: '{{ .metadata.labels.management_id }}'
+              argocdTargetGroupArn: '{{ .metadata.annotations.sre_mc_argocd_target_group_arn }}'
+              prometheusTargetGroupArn: '{{ .metadata.annotations.sre_mc_prometheus_target_group_arn }}'
+            # Prometheus and ArgoCD path prefixes: serve under /{mc_id}/{service}/
+            # so the RC MC SRE UI ALB can route path-based traffic without stripping.
+            kube-prometheus-stack:
+              prometheus:
+                prometheusSpec:
+                  routePrefix: '/{{ .metadata.labels.management_id }}/prometheus'
+            argo-cd:
+              configs:
+                params:
+                  server.rootpath: '/{{ .metadata.labels.management_id }}/argocd'
             # SRE UI ALB target group ARNs (empty when enable_sre_tools_gateway = false)
             grafana:
               sre:

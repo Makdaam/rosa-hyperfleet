@@ -341,7 +341,7 @@ resource "aws_lb_target_group" "mc_service" {
 
   health_check {
     enabled             = true
-    path                = each.value.svc.health_path
+    path                = "/${each.value.mc_id}/${each.value.svc_key}${each.value.svc.health_path}"
     port                = "traffic-port"
     protocol            = each.value.svc.health_protocol
     healthy_threshold   = 2
