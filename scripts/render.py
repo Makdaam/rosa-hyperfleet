@@ -368,6 +368,7 @@ CONTEXT_VARS = {
     "application_values", "region_configs", "eph_prefix",
     "delete", "delete_pipeline", "mc_key", "region",
     "pinned", "mc_account_ids", "ci",
+    "mc",  # per-MC config object; individual keys are not @doc-annotated
 }
 
 _DOC_RE = re.compile(r"^\s*#\s*(?:#\s*)?@doc\s+(\S+)\s+(.+)$", re.MULTILINE)
@@ -407,7 +408,7 @@ def scan_template_variables(templates_dir: Path) -> dict[str, list[str]]:
         for pattern in _TPL_PATTERNS:
             for match in pattern.finditer(content):
                 var = match.group(1)
-                if var.startswith("_") or var.split(".")[0] in ("true", "false", "none", "loop"):
+                if var.startswith("_") or var.split(".")[0] in ("true", "false", "none", "loop", "if", "else", "end"):
                     continue
                 if var not in var_to_templates:
                     var_to_templates[var] = []

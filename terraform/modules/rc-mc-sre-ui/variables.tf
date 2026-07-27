@@ -26,11 +26,6 @@ variable "regional_id" {
   type        = string
 }
 
-variable "vpc_cidr" {
-  description = "RC VPC CIDR block - used for security group egress rules"
-  type        = string
-}
-
 variable "allowed_source_cidrs" {
   description = "Source CIDRs allowed to reach the ALB. Required - must be non-empty."
   type        = list(string)

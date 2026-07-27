@@ -146,7 +146,7 @@ variable "enable_mc_sre_ui" {
 }
 
 variable "rc_nat_gateway_eips" {
-  description = "Public Elastic IPs of the RC VPC's NAT Gateways. NLB ingress is restricted to these. Required when enable_mc_monitoring_gateway = true."
+  description = "Public Elastic IPs of the RC VPC's NAT Gateways. NLB ingress is restricted to these. Required when enable_mc_sre_ui = true."
   type        = list(string)
   default     = []
 }

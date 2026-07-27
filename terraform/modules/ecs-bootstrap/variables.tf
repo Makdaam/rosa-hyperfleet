@@ -59,6 +59,12 @@ variable "loki_kms_key_arn" {
   default     = ""
 }
 
+variable "management_id" {
+  description = "Management cluster ID (empty for regional clusters). Populates the management_id label in the ArgoCD cluster secret."
+  type        = string
+  default     = ""
+}
+
 variable "management_clusters" {
   description = "Comma-separated colon-delimited MC entries (e.g. mc01:123456789012,mc02:987654321098)"
   type        = string

@@ -290,6 +290,10 @@ resource "aws_ecs_task_definition" "bootstrap" {
           value = data.aws_caller_identity.current.account_id
         },
         {
+          name  = "MANAGEMENT_ID"
+          value = var.management_id
+        },
+        {
           name  = "MANAGEMENT_CLUSTERS"
           value = var.management_clusters
         },

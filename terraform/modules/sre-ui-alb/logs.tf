@@ -41,6 +41,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "access_logs" {
     expiration {
       days = var.access_logs_standard_days + var.access_logs_glacier_days
     }
+
+    noncurrent_version_expiration {
+      noncurrent_days = var.access_logs_standard_days + var.access_logs_glacier_days
+    }
   }
 }
 

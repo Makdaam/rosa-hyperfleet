@@ -11,6 +11,7 @@
   "regional_aws_account_id": "{{ account_id }}"
 {%- if mc.enable_bastion is defined %},
   "enable_bastion": {{ mc.enable_bastion | tojson }}{% elif management_cluster_defaults.enable_bastion %},
-  "enable_bastion": {{ management_cluster_defaults.enable_bastion | tojson }}{% endif %}{% if mc.delete %},
+  "enable_bastion": {{ management_cluster_defaults.enable_bastion | tojson }}{% endif %},
+  "enable_mc_sre_ui": {% if mc.enable_mc_sre_ui is defined %}{{ mc.enable_mc_sre_ui | tojson }}{% elif management_cluster_defaults.enable_mc_sre_ui %}{{ management_cluster_defaults.enable_mc_sre_ui | tojson }}{% else %}false{% endif %}{% if mc.delete %},
   "delete": true{% endif %}
 }

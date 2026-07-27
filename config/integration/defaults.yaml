@@ -20,6 +20,7 @@ regional_cluster:
 management_cluster_defaults:
   enable_bastion: true
   node_instance_families: ["m8i", "m7i"]
+  enable_mc_sre_ui: true
 
 observability:
   pagerduty:

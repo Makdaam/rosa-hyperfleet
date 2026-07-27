@@ -65,7 +65,8 @@ else
            [ -n "${TF_VAR_oidc_bucket_name}" ] && \
            [ -n "${TF_VAR_oidc_bucket_arn}" ] && \
            [ -n "${TF_VAR_oidc_bucket_region}" ] && \
-           [ -n "${TF_VAR_rhobs_api_url}" ]; then
+           [ -n "${TF_VAR_rhobs_api_url}" ] && \
+           [ "${TF_VAR_rc_nat_gateway_eips}" != "[]" ] && [ -n "${TF_VAR_rc_nat_gateway_eips}" ]; then
             break
         fi
         echo "RC outputs not ready (attempt ${_OIDC_RETRY_COUNT}/${_OIDC_MAX_RETRIES}), retrying in ${_OIDC_RETRY_DELAY}s..."
@@ -75,7 +76,8 @@ else
        [ -z "${TF_VAR_oidc_bucket_name}" ] || \
        [ -z "${TF_VAR_oidc_bucket_arn}" ] || \
        [ -z "${TF_VAR_oidc_bucket_region}" ] || \
-       [ -z "${TF_VAR_rhobs_api_url}" ]; then
+       [ -z "${TF_VAR_rhobs_api_url}" ] || \
+       [ "${TF_VAR_rc_nat_gateway_eips}" = "[]" ] || [ -z "${TF_VAR_rc_nat_gateway_eips}" ]; then
         echo "ERROR: RC outputs missing after $((_OIDC_MAX_RETRIES * _OIDC_RETRY_DELAY / 60))+ minutes" >&2
         exit 1
     fi
@@ -114,6 +116,8 @@ fi
 export TF_VAR_container_image="${PLATFORM_IMAGE}"
 
 export TF_VAR_enable_bastion="${ENABLE_BASTION}"
+TF_VAR_enable_mc_sre_ui=$(parseBool '.enable_mc_sre_ui' false "$DEPLOY_CONFIG_FILE")
+export TF_VAR_enable_mc_sre_ui
 
 if [ -n "${DNS_ZONE_OPERATOR_ROLE_ARN:-}" ]; then
     export TF_VAR_dns_zone_operator_role_arn="${DNS_ZONE_OPERATOR_ROLE_ARN}"

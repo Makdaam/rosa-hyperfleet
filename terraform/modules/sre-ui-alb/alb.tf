@@ -93,6 +93,18 @@ resource "aws_lb" "sre" {
       condition     = var.internal || length(var.allowed_source_cidrs) > 0
       error_message = "allowed_source_cidrs must not be empty when internal = false. Specify at least one source CIDR to restrict public access."
     }
+    precondition {
+      condition     = var.internal || local.has_domain
+      error_message = "environment_domain must be set when internal = false. A public ALB requires TLS via ACM certificate."
+    }
+    precondition {
+      condition     = !var.oidc_enabled || local.has_domain
+      error_message = "environment_domain must be set when oidc_enabled = true. OIDC authentication requires an HTTPS listener."
+    }
+    precondition {
+      condition     = !var.oidc_enabled || alltrue([for svc in keys(local.services) : contains(keys(var.oidc_clients), svc)])
+      error_message = "oidc_clients must contain entries for all services (${join(", ", keys(local.services))}) when oidc_enabled = true."
+    }
   }
 }
 

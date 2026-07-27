@@ -1135,12 +1135,12 @@ cmd_sre_tunnel() {
     echo "==> SRE UI tunnel active"
     echo ""
     echo "Add these lines to /etc/hosts (requires sudo):"
-    for tool in grafana argocd prometheus thanos loki; do
+    for tool in grafana argocd prometheus thanos; do
         printf "    127.0.0.1  %s.%s\n" "$tool" "$sre_domain"
     done
     echo ""
     echo "Then open (note: port ${local_port}, not 443):"
-    for tool in grafana argocd prometheus thanos loki; do
+    for tool in grafana argocd prometheus thanos; do
         printf "    https://%s.%s:%s\n" "$tool" "$sre_domain" "$local_port"
     done
     echo ""

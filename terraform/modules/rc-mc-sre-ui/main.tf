@@ -27,12 +27,14 @@ locals {
   services = {
     argocd = {
       port            = 8080
+      protocol        = "HTTPS"
       health_protocol = "HTTPS"
       health_path     = "/healthz"
       priority_offset = 0
     }
     prometheus = {
       port            = 9090
+      protocol        = "HTTP"
       health_protocol = "HTTP"
       health_path     = "/-/ready"
       priority_offset = 10
@@ -284,6 +286,13 @@ resource "aws_lb" "mc_sre" {
   tags = { Name = "${var.regional_id}-mc-sre" }
 
   depends_on = [aws_s3_bucket_policy.access_logs]
+
+  lifecycle {
+    precondition {
+      condition     = local.has_domain
+      error_message = "environment_domain must be set. The MC SRE UI ALB requires TLS via ACM certificate."
+    }
+  }
 }
 
 resource "aws_lb_listener" "https" {
@@ -335,7 +344,7 @@ resource "aws_lb_target_group" "mc_service" {
 
   name        = "${local.tg_prefix}-mc-${each.value.mc_id}-${each.value.svc_key}"
   port        = each.value.svc.port
-  protocol    = "HTTP"
+  protocol    = each.value.svc.protocol
   vpc_id      = var.vpc_id
   target_type = "ip"
 

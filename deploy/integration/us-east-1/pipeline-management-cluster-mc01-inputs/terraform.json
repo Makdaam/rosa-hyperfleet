@@ -9,5 +9,6 @@
   "alias": "mc01",
   "management_id": "mc01",
   "regional_aws_account_id": "ssm:///infra/integration/us-east-1/account_id",
-  "enable_bastion": true
+  "enable_bastion": true,
+  "enable_mc_sre_ui": true
 }

@@ -305,7 +305,6 @@ module "rc_mc_sre_ui" {
 
   regional_id          = var.regional_id
   vpc_id               = module.vpc.vpc_id
-  vpc_cidr             = module.vpc.vpc_cidr
   public_subnet_ids    = module.vpc.public_subnet_ids
   allowed_source_cidrs = var.sre_allowed_source_cidrs
 

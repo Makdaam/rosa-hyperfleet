@@ -415,3 +415,8 @@ output "zoa_kms_key_arn" {
   description = "KMS key ARN for ZOA encryption (used by MC Pod Identity for S3 SSE-KMS)"
   value       = module.zoa.kms_key_arn
 }
+
+output "nat_gateway_public_ips" {
+  description = "Public Elastic IPs of the VPC NAT Gateways (consumed by MC SRE UI NLB security group)"
+  value       = module.vpc.nat_gateway_public_ips
+}

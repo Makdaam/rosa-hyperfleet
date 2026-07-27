@@ -83,6 +83,7 @@ def _create_config_structure(
         },
         "management_cluster_defaults": {
             "enable_bastion": False,
+            "enable_mc_sre_ui": False,
             "node_instance_families": ["m8i", "m7i"],
         },
         "observability": {
@@ -1592,6 +1593,179 @@ class TestMainIntegration:
         assert data["regional_aws_account_id"] == "999999999999"
         assert data["app_code"] == "infra"
 
+    def test_mc_sre_ui_default_false(self, tmp_path):
+        deploy_dir = self._run_main(
+            tmp_path,
+            global_defaults={
+                "aws": {
+                    "account_id": "999999999999",
+                    "management_cluster_account_id": "111111111111",
+                },
+            },
+            environments={
+                "staging": {
+                    "defaults": {},
+                    "regions": {
+                        "us-east-1": {
+                            "provision_mcs": {"mc01": {}},
+                        },
+                    },
+                }
+            },
+        )
+
+        mc_tf_file = (
+            deploy_dir
+            / "staging"
+            / "us-east-1"
+            / "pipeline-management-cluster-mc01-inputs"
+            / "terraform.json"
+        )
+        data = json.loads(mc_tf_file.read_text())
+        assert data["enable_mc_sre_ui"] is False
+
+    def test_mc_sre_ui_enabled_via_defaults(self, tmp_path):
+        deploy_dir = self._run_main(
+            tmp_path,
+            global_defaults={
+                "aws": {
+                    "account_id": "999999999999",
+                    "management_cluster_account_id": "111111111111",
+                },
+                "management_cluster_defaults": {
+                    "enable_mc_sre_ui": True,
+                },
+            },
+            environments={
+                "staging": {
+                    "defaults": {},
+                    "regions": {
+                        "us-east-1": {
+                            "provision_mcs": {"mc01": {}},
+                        },
+                    },
+                }
+            },
+        )
+
+        mc_tf_file = (
+            deploy_dir
+            / "staging"
+            / "us-east-1"
+            / "pipeline-management-cluster-mc01-inputs"
+            / "terraform.json"
+        )
+        data = json.loads(mc_tf_file.read_text())
+        assert data["enable_mc_sre_ui"] is True
+
+    def test_mc_sre_ui_per_mc_override(self, tmp_path):
+        deploy_dir = self._run_main(
+            tmp_path,
+            global_defaults={
+                "aws": {
+                    "account_id": "999999999999",
+                    "management_cluster_account_id": "111111111111",
+                },
+                "management_cluster_defaults": {
+                    "enable_mc_sre_ui": False,
+                },
+            },
+            environments={
+                "staging": {
+                    "defaults": {},
+                    "regions": {
+                        "us-east-1": {
+                            "provision_mcs": {
+                                "mc01": {"enable_mc_sre_ui": True},
+                            },
+                        },
+                    },
+                }
+            },
+        )
+
+        mc_tf_file = (
+            deploy_dir
+            / "staging"
+            / "us-east-1"
+            / "pipeline-management-cluster-mc01-inputs"
+            / "terraform.json"
+        )
+        data = json.loads(mc_tf_file.read_text())
+        assert data["enable_mc_sre_ui"] is True
+
+    def test_rc_mc_sre_ui_variables_rendered(self, tmp_path):
+        deploy_dir = self._run_main(
+            tmp_path,
+            global_defaults={
+                "aws": {"account_id": "111111111111"},
+                "regional_cluster": {
+                    "enable_rc_mc_sre_ui": True,
+                    "rc_mc_sre_ui_prefix": "mc",
+                    "enable_rc_mc_sre_ui_oidc": True,
+                    "rc_mc_sre_ui_oidc_client_id": "test-client",
+                },
+            },
+            environments={
+                "staging": {
+                    "defaults": {},
+                    "regions": {
+                        "us-east-1": {"provision_mcs": {}},
+                    },
+                }
+            },
+        )
+
+        tf_file = (
+            deploy_dir
+            / "staging"
+            / "us-east-1"
+            / "pipeline-regional-cluster-inputs"
+            / "terraform.json"
+        )
+        data = json.loads(tf_file.read_text())
+        assert data["enable_rc_mc_sre_ui"] is True
+        assert data["rc_mc_sre_ui_prefix"] == "mc"
+        assert data["enable_rc_mc_sre_ui_oidc"] is True
+        assert data["rc_mc_sre_ui_oidc_client_id"] == "test-client"
+
+    def test_applicationset_no_duplicate_yaml_keys(self, tmp_path):
+        """Rendered ApplicationSets must not have duplicate YAML keys."""
+        from ruamel.yaml import YAML
+
+        deploy_dir = self._run_main(
+            tmp_path,
+            global_defaults={
+                "aws": {
+                    "account_id": "999999999999",
+                    "management_cluster_account_id": "111111111111",
+                },
+            },
+            environments={
+                "staging": {
+                    "defaults": {},
+                    "regions": {
+                        "us-east-1": {
+                            "provision_mcs": {"mc01": {}},
+                        },
+                    },
+                }
+            },
+        )
+
+        ry = YAML()
+        ry.allow_duplicate_keys = False
+        for cluster_type in ("management-cluster", "regional-cluster"):
+            appset_file = (
+                deploy_dir
+                / "staging"
+                / "us-east-1"
+                / f"argocd-bootstrap-{cluster_type}"
+                / "applicationset.yaml"
+            )
+            if appset_file.exists():
+                ry.load(appset_file.read_text())
+
     def test_mc_account_ids_added_to_regional_terraform(self, tmp_path):
         deploy_dir = self._run_main(
             tmp_path,
@@ -2206,6 +2380,17 @@ class TestScanTemplateVariables:
         result = scan_template_variables(tpl_dir)
         assert result["dns.domain"] == ["sub/test.j2"]
 
+    def test_gotemplate_keywords_not_flagged(self, tmp_path):
+        """goTemplate keywords (if, else, end) must not be flagged as variables."""
+        tpl_dir = tmp_path / "templates"
+        tpl_dir.mkdir()
+        (tpl_dir / "test.j2").write_text(
+            '{% if else %}nope{% endif %}\n{% if end %}nope{% endif %}'
+        )
+        result = scan_template_variables(tpl_dir)
+        assert "else" not in result
+        assert "end" not in result
+
 
 class TestCollectLeafPaths:
     def test_flat_dict(self):
@@ -2302,6 +2487,15 @@ class TestCheckDocs:
             tmp_path,
             "{}\n",
             {"test.j2": "{{ environment }}"},
+        )
+        assert check_docs(config, tpl) == 0
+
+    def test_mc_context_var_not_flagged(self, tmp_path):
+        """mc.* template vars don't need @doc (mc is a CONTEXT_VAR)."""
+        config, tpl = self._setup(
+            tmp_path,
+            "{}\n",
+            {"test.j2": "{{ mc.enable_mc_sre_ui }}"},
         )
         assert check_docs(config, tpl) == 0
 
