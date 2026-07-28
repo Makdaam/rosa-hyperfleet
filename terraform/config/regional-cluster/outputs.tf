@@ -391,6 +391,16 @@ output "sre_domain" {
   value       = try(module.sre_ui_alb[0].sre_domain, "")
 }
 
+output "sre_mc_alb_dns_name" {
+  description = "DNS name of the RC MC SRE UI ALB"
+  value       = try(module.rc_mc_sre_ui[0].alb_dns_name, "")
+}
+
+output "sre_mc_hostname" {
+  description = "Hostname of the MC SRE UI ALB (e.g. mc.sre.us-east-1.int0.rosa.devshift.net)"
+  value       = try(module.rc_mc_sre_ui[0].hostname, "")
+}
+
 output "zoa_table_name" {
   description = "DynamoDB table name for ZOA executions"
   value       = module.zoa.table_name

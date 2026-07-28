@@ -1100,7 +1100,9 @@ cmd_sre_tunnel() {
 
     local target="ecs:${ecs_cluster}_${task_id}_${runtime_id}"
 
-    # Retrieve ALB DNS and SRE domain from the in-cluster secret via bastion
+    local mc_local_port=4444
+
+    # Retrieve ALB DNS names, SRE domain, and MC IDs from the in-cluster secret via bastion
     echo "==> Fetching SRE gateway info from cluster..."
     local raw
     raw=$(aws ecs execute-command \
@@ -1108,18 +1110,28 @@ cmd_sre_tunnel() {
         --task "$task_id" \
         --container bastion \
         --interactive \
-        --command "sh -c \"echo SRE_ALB=\$(kubectl get secret local-cluster-identity -n argocd -o jsonpath='{.metadata.annotations.sre_alb_dns_name}'); echo SRE_DOMAIN=\$(kubectl get secret local-cluster-identity -n argocd -o jsonpath='{.metadata.annotations.sre_domain}')\"" 2>/dev/null || true)
+        --command "sh -c \"
+            echo SRE_ALB=\$(kubectl get secret local-cluster-identity -n argocd -o jsonpath='{.metadata.annotations.sre_alb_dns_name}');
+            echo SRE_DOMAIN=\$(kubectl get secret local-cluster-identity -n argocd -o jsonpath='{.metadata.annotations.sre_domain}');
+            echo SRE_MC_ALB=\$(kubectl get secret local-cluster-identity -n argocd -o jsonpath='{.metadata.annotations.sre_mc_alb_dns_name}');
+            echo SRE_MC_HOSTNAME=\$(kubectl get secret local-cluster-identity -n argocd -o jsonpath='{.metadata.annotations.sre_mc_hostname}');
+            echo MC_IDS=\$(kubectl get secrets -n argocd -l argocd.argoproj.io/secret-type=cluster -o jsonpath='{.items[*].metadata.labels.management_id}')
+        \"" 2>/dev/null || true)
 
-    local alb_dns sre_domain
+    local alb_dns sre_domain mc_alb_dns mc_hostname mc_ids
     alb_dns=$(echo "$raw" | grep -o 'SRE_ALB=.*' | cut -d= -f2 | tr -d '[:space:]')
     sre_domain=$(echo "$raw" | grep -o 'SRE_DOMAIN=.*' | cut -d= -f2 | tr -d '[:space:]')
+    mc_alb_dns=$(echo "$raw" | grep -o 'SRE_MC_ALB=.*' | cut -d= -f2 | tr -d '[:space:]')
+    mc_hostname=$(echo "$raw" | grep -o 'SRE_MC_HOSTNAME=.*' | cut -d= -f2 | tr -d '[:space:]')
+    mc_ids=$(echo "$raw" | grep -o 'MC_IDS=.*' | cut -d= -f2 | tr -d '[:space:]')
 
     [[ -n "$alb_dns" ]] || die "Could not retrieve SRE ALB DNS. Is the SRE gateway deployed?"
     [[ -n "$sre_domain" ]] || die "Could not retrieve SRE domain."
 
     cleanup() {
-        echo ""; echo "Closing SRE UI tunnel..."
+        echo ""; echo "Closing SRE UI tunnel(s)..."
         kill "$ssm_pid" 2>/dev/null || true
+        kill "${mc_ssm_pid:-}" 2>/dev/null || true
     }
     chain_exit_trap cleanup
 
@@ -1129,6 +1141,17 @@ cmd_sre_tunnel() {
         --document-name AWS-StartPortForwardingSessionToRemoteHost \
         --parameters "{\"host\":[\"${alb_dns}\"],\"portNumber\":[\"443\"],\"localPortNumber\":[\"${local_port}\"]}" &
     ssm_pid=$!
+
+    local mc_ssm_pid=""
+    if [[ -n "$mc_alb_dns" ]]; then
+        echo "==> [local] SSM tunnel localhost:${mc_local_port} -> ${mc_alb_dns}:443"
+        aws ssm start-session \
+            --target "$target" \
+            --document-name AWS-StartPortForwardingSessionToRemoteHost \
+            --parameters "{\"host\":[\"${mc_alb_dns}\"],\"portNumber\":[\"443\"],\"localPortNumber\":[\"${mc_local_port}\"]}" &
+        mc_ssm_pid=$!
+    fi
+
     sleep 3
 
     echo ""
@@ -1138,13 +1161,25 @@ cmd_sre_tunnel() {
     for tool in grafana argocd prometheus thanos; do
         printf "    127.0.0.1  %s.%s\n" "$tool" "$sre_domain"
     done
+    if [[ -n "$mc_hostname" ]]; then
+        printf "    127.0.0.1  %s\n" "$mc_hostname"
+    fi
     echo ""
     echo "Then open (note: port ${local_port}, not 443):"
     for tool in grafana argocd prometheus thanos; do
         printf "    https://%s.%s:%s\n" "$tool" "$sre_domain" "$local_port"
     done
+    if [[ -n "$mc_hostname" && -n "$mc_ids" ]]; then
+        echo ""
+        echo "MC SRE UI (port ${mc_local_port}):"
+        for mc_id in $mc_ids; do
+            [[ -z "$mc_id" ]] && continue
+            printf "    https://%s:%s/%s/argocd\n" "$mc_hostname" "$mc_local_port" "$mc_id"
+            printf "    https://%s:%s/%s/prometheus\n" "$mc_hostname" "$mc_local_port" "$mc_id"
+        done
+    fi
     echo ""
-    echo "Press Ctrl+C to close the tunnel."
+    echo "Press Ctrl+C to close the tunnel(s)."
     wait "$ssm_pid"
 }
 

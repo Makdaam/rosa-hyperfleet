@@ -228,6 +228,8 @@ resource "aws_ecs_task_definition" "bootstrap" {
               sre_domain: "$SRE_DOMAIN"
               sre_mc_argocd_target_group_arn: "$SRE_MC_ARGOCD_TARGET_GROUP_ARN"
               sre_mc_prometheus_target_group_arn: "$SRE_MC_PROMETHEUS_TARGET_GROUP_ARN"
+              sre_mc_alb_dns_name: "$SRE_MC_ALB_DNS_NAME"
+              sre_mc_hostname: "$SRE_MC_HOSTNAME"
           type: Opaque
           stringData:
             name: in-cluster
@@ -292,6 +294,14 @@ resource "aws_ecs_task_definition" "bootstrap" {
         {
           name  = "MANAGEMENT_ID"
           value = var.management_id
+        },
+        {
+          name  = "SRE_MC_ALB_DNS_NAME"
+          value = var.sre_mc_alb_dns_name
+        },
+        {
+          name  = "SRE_MC_HOSTNAME"
+          value = var.sre_mc_hostname
         },
         {
           name  = "MANAGEMENT_CLUSTERS"

@@ -11,13 +11,37 @@ variable "vpc_id" {
   type        = string
 }
 
+variable "internal" {
+  description = "When true, ALB is internal - only reachable from within the VPC via bastion. When false (default), ALB is internet-facing and allowed_source_cidrs must be set."
+  type        = bool
+  default     = false
+}
+
+variable "vpc_cidr" {
+  description = "VPC CIDR block. Required when internal = true for security group ingress."
+  type        = string
+  default     = null
+}
+
 variable "public_subnet_ids" {
-  description = "Public subnet IDs for the internet-facing ALB (at least 2 AZs)"
+  description = "Public subnet IDs for the internet-facing ALB (at least 2 AZs). Required when internal = false."
   type        = list(string)
+  default     = []
 
   validation {
-    condition     = length(var.public_subnet_ids) >= 2
-    error_message = "At least 2 public subnets are required for ALB high availability."
+    condition     = length(var.public_subnet_ids) >= 2 || length(var.public_subnet_ids) == 0
+    error_message = "When public_subnet_ids is provided, at least 2 subnets are required for ALB high availability."
+  }
+}
+
+variable "private_subnet_ids" {
+  description = "Private subnet IDs for the internal ALB (at least 2 AZs). Required when internal = true."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition     = length(var.private_subnet_ids) >= 2 || length(var.private_subnet_ids) == 0
+    error_message = "When private_subnet_ids is provided, at least 2 subnets are required for ALB high availability."
   }
 }
 
@@ -27,13 +51,9 @@ variable "regional_id" {
 }
 
 variable "allowed_source_cidrs" {
-  description = "Source CIDRs allowed to reach the ALB. Required - must be non-empty."
+  description = "Source CIDRs allowed to reach the ALB. Required when internal = false."
   type        = list(string)
-
-  validation {
-    condition     = length(var.allowed_source_cidrs) > 0
-    error_message = "allowed_source_cidrs must not be empty. Specify at least one source CIDR."
-  }
+  default     = []
 }
 
 # =============================================================================

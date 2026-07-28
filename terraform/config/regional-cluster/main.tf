@@ -200,6 +200,9 @@ module "ecs_bootstrap" {
   loki_kms_key_arn   = module.loki_infrastructure.kms_key_arn
 
   management_clusters = var.management_clusters
+
+  sre_mc_alb_dns_name = try(module.rc_mc_sre_ui[0].alb_dns_name, "")
+  sre_mc_hostname     = try(module.rc_mc_sre_ui[0].hostname, "")
 }
 
 # =============================================================================
@@ -305,7 +308,10 @@ module "rc_mc_sre_ui" {
 
   regional_id          = var.regional_id
   vpc_id               = module.vpc.vpc_id
+  internal             = !var.enable_sre_public_access
+  vpc_cidr             = var.enable_sre_public_access ? null : module.vpc.vpc_cidr
   public_subnet_ids    = module.vpc.public_subnet_ids
+  private_subnet_ids   = module.vpc.private_subnet_ids
   allowed_source_cidrs = var.sre_allowed_source_cidrs
 
   regional_hosted_zone_id = var.environment_domain != null ? aws_route53_zone.regional[0].zone_id : null

@@ -125,7 +125,7 @@ regional_cluster:
   sre_thanos_oidc_client_id: ""
   # @doc regional_cluster.enable_rc_mc_sre_ui Enable the RC MC SRE UI ALB providing path-based access to ArgoCD and Prometheus on each MC.
   # @used-by regional_cluster.enable_rc_mc_sre_ui pipeline-regional-cluster-inputs/terraform.json.j2
-  enable_rc_mc_sre_ui: false
+  enable_rc_mc_sre_ui: true
   # @doc regional_cluster.rc_mc_sre_ui_prefix Hostname prefix for the MC SRE UI ALB. Composes to {prefix}.sre.{deployment_name}.{domain}.
   # @used-by regional_cluster.rc_mc_sre_ui_prefix pipeline-regional-cluster-inputs/terraform.json.j2
   rc_mc_sre_ui_prefix: "mc"
@@ -146,7 +146,7 @@ management_cluster_defaults:
   node_instance_families: ["m8i-flex", "m7i-flex"]
   # @doc management_cluster_defaults.enable_mc_sre_ui Enable the MC SRE UI NLB exposing ArgoCD and Prometheus to the RC SRE UI ALB.
   # @used-by management_cluster_defaults.enable_mc_sre_ui pipeline-management-cluster-inputs/terraform.json.j2
-  enable_mc_sre_ui: false
+  enable_mc_sre_ui: true
 
 observability:
   pagerduty:

@@ -19,8 +19,11 @@ locals {
   has_domain = var.environment_domain != null && var.environment_domain != ""
   hostname   = local.has_domain ? "${var.mc_prefix}.sre.${var.deployment_name}.${var.environment_domain}" : null
 
-  # AWS resource name prefix - cap at 10 chars to leave room for suffixes like
-  # "-mc-mc01-prometheus" (19 chars), keeping total under the 32-char limit.
+  # Target group name pattern: mc-{mc_id_short}-{svc_key}
+  # Budget: "mc-" (3) + 17 (mc_id_short) + "-" (1) + "prometheus" (10) = 31 chars max.
+  # mc_id already contains the environment discriminator (e.g. "eph-4555a220-mc01"
+  # for ephemeral, "mc01" for int), so no extra env prefix is needed.
+  # mc_id is capped at 17 chars from the end to preserve the MC number suffix.
   tg_prefix = substr(var.regional_id, 0, min(length(var.regional_id), 10))
 
   # Services exposed per MC
@@ -49,13 +52,14 @@ locals {
     for pair in flatten([
       for mc_id in local.mc_ids_sorted : [
         for svc_key, svc in local.services : {
-          key      = "${mc_id}-${svc_key}"
-          mc_id    = mc_id
-          svc_key  = svc_key
-          svc      = svc
-          mc_index = index(local.mc_ids_sorted, mc_id)
-          eips     = var.mc_endpoints[mc_id].eips
-          priority = (index(local.mc_ids_sorted, mc_id) + 1) * 100 + svc.priority_offset
+          key         = "${mc_id}-${svc_key}"
+          mc_id       = mc_id
+          mc_id_short = substr(mc_id, max(0, length(mc_id) - 17), length(mc_id))
+          svc_key     = svc_key
+          svc         = svc
+          mc_index    = index(local.mc_ids_sorted, mc_id)
+          eips        = var.mc_endpoints[mc_id].eips
+          priority    = (index(local.mc_ids_sorted, mc_id) + 1) * 100 + svc.priority_offset
         }
       ]
     ]) : pair.key => pair
@@ -214,8 +218,33 @@ resource "aws_security_group" "alb" {
   tags = { Name = "${var.regional_id}-mc-sre-alb" }
 }
 
+# Ingress: HTTPS from VPC CIDR (internal mode)
+resource "aws_vpc_security_group_ingress_rule" "alb_https_from_vpc" {
+  count = var.internal ? 1 : 0
+
+  security_group_id = aws_security_group.alb.id
+  description       = "Allow HTTPS from VPC (internal access)"
+  ip_protocol       = "tcp"
+  from_port         = 443
+  to_port           = 443
+  cidr_ipv4         = var.vpc_cidr
+}
+
+# Ingress: HTTP from VPC CIDR (internal mode, no-domain fallback)
+resource "aws_vpc_security_group_ingress_rule" "alb_http_from_vpc" {
+  count = var.internal ? 1 : 0
+
+  security_group_id = aws_security_group.alb.id
+  description       = "Allow HTTP from VPC (internal access, no-domain fallback)"
+  ip_protocol       = "tcp"
+  from_port         = 80
+  to_port           = 80
+  cidr_ipv4         = var.vpc_cidr
+}
+
+# Ingress: HTTPS from allowed CIDRs (public mode)
 resource "aws_vpc_security_group_ingress_rule" "alb_https_from_cidr" {
-  count = length(var.allowed_source_cidrs)
+  count = var.internal ? 0 : length(var.allowed_source_cidrs)
 
   security_group_id = aws_security_group.alb.id
   description       = "Allow HTTPS from ${var.allowed_source_cidrs[count.index]}"
@@ -272,10 +301,10 @@ resource "aws_vpc_security_group_egress_rule" "alb_to_mc_prometheus" {
 
 resource "aws_lb" "mc_sre" {
   name               = "${local.tg_prefix}-mc-sre"
-  internal           = false
+  internal           = var.internal
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb.id]
-  subnets            = var.public_subnet_ids
+  subnets            = var.internal ? var.private_subnet_ids : var.public_subnet_ids
 
   access_logs {
     bucket  = aws_s3_bucket.access_logs.id
@@ -289,8 +318,20 @@ resource "aws_lb" "mc_sre" {
 
   lifecycle {
     precondition {
-      condition     = local.has_domain
-      error_message = "environment_domain must be set. The MC SRE UI ALB requires TLS via ACM certificate."
+      condition     = var.internal || local.has_domain
+      error_message = "environment_domain must be set when internal = false. The public MC SRE UI ALB requires TLS via ACM certificate."
+    }
+    precondition {
+      condition     = !var.oidc_enabled || local.has_domain
+      error_message = "environment_domain must be set when oidc_enabled = true. OIDC authentication requires an HTTPS listener."
+    }
+    precondition {
+      condition     = var.internal || length(var.allowed_source_cidrs) > 0
+      error_message = "allowed_source_cidrs must not be empty when internal = false. Specify at least one source CIDR."
+    }
+    precondition {
+      condition     = !var.internal || var.vpc_cidr != null
+      error_message = "vpc_cidr must be set when internal = true."
     }
   }
 }
@@ -342,7 +383,7 @@ locals {
 resource "aws_lb_target_group" "mc_service" {
   for_each = local.mc_service_pairs
 
-  name        = "${local.tg_prefix}-mc-${each.value.mc_id}-${each.value.svc_key}"
+  name        = "mc-${each.value.mc_id_short}-${each.value.svc_key}"
   port        = each.value.svc.port
   protocol    = each.value.svc.protocol
   vpc_id      = var.vpc_id

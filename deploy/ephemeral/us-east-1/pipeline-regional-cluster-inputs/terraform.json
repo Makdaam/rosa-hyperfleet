@@ -24,7 +24,7 @@
   "sre_argocd_oidc_client_id": "",
   "sre_prometheus_oidc_client_id": "",
   "sre_thanos_oidc_client_id": "",
-  "enable_rc_mc_sre_ui": false,
+  "enable_rc_mc_sre_ui": true,
   "rc_mc_sre_ui_prefix": "mc",
   "enable_rc_mc_sre_ui_oidc": false,
   "rc_mc_sre_ui_oidc_client_id": "",

@@ -65,6 +65,18 @@ variable "management_id" {
   default     = ""
 }
 
+variable "sre_mc_alb_dns_name" {
+  description = "DNS name of the RC MC SRE UI ALB. Empty when rc_mc_sre_ui is not deployed."
+  type        = string
+  default     = ""
+}
+
+variable "sre_mc_hostname" {
+  description = "Hostname of the RC MC SRE UI ALB (e.g. mc.sre.us-east-1.int0.rosa.devshift.net). Empty when rc_mc_sre_ui is not deployed."
+  type        = string
+  default     = ""
+}
+
 variable "management_clusters" {
   description = "Comma-separated colon-delimited MC entries (e.g. mc01:123456789012,mc02:987654321098)"
   type        = string

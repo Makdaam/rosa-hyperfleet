@@ -83,6 +83,8 @@ if [[ "$CLUSTER_TYPE" == "regional-cluster" ]]; then
     SRE_DOMAIN=$(echo "$OUTPUTS" | jq -r '.sre_domain.value // ""')
     SRE_MC_ARGOCD_TARGET_GROUP_ARN=$(echo "$OUTPUTS" | jq -r '.sre_mc_argocd_target_group_arn.value // ""')
     SRE_MC_PROMETHEUS_TARGET_GROUP_ARN=$(echo "$OUTPUTS" | jq -r '.sre_mc_prometheus_target_group_arn.value // ""')
+    SRE_MC_ALB_DNS_NAME=$(echo "$OUTPUTS" | jq -r '.sre_mc_alb_dns_name.value // ""')
+    SRE_MC_HOSTNAME=$(echo "$OUTPUTS" | jq -r '.sre_mc_hostname.value // ""')
 else
     API_TARGET_GROUP_ARN=""
     THANOS_TARGET_GROUP_ARN=""
@@ -102,6 +104,8 @@ else
     SRE_DOMAIN=""
     SRE_MC_ARGOCD_TARGET_GROUP_ARN=""
     SRE_MC_PROMETHEUS_TARGET_GROUP_ARN=""
+    SRE_MC_ALB_DNS_NAME=""
+    SRE_MC_HOSTNAME=""
 fi
 
 RHOBS_API_URL="${RHOBS_API_URL:-}"
@@ -146,7 +150,9 @@ RUN_TASK_OUTPUT=$(aws ecs run-task \
         {\"name\": \"SRE_ALB_DNS_NAME\", \"value\": \"$SRE_ALB_DNS_NAME\"},
         {\"name\": \"SRE_DOMAIN\", \"value\": \"$SRE_DOMAIN\"},
         {\"name\": \"SRE_MC_ARGOCD_TARGET_GROUP_ARN\", \"value\": \"$SRE_MC_ARGOCD_TARGET_GROUP_ARN\"},
-        {\"name\": \"SRE_MC_PROMETHEUS_TARGET_GROUP_ARN\", \"value\": \"$SRE_MC_PROMETHEUS_TARGET_GROUP_ARN\"}
+        {\"name\": \"SRE_MC_PROMETHEUS_TARGET_GROUP_ARN\", \"value\": \"$SRE_MC_PROMETHEUS_TARGET_GROUP_ARN\"},
+        {\"name\": \"SRE_MC_ALB_DNS_NAME\", \"value\": \"$SRE_MC_ALB_DNS_NAME\"},
+        {\"name\": \"SRE_MC_HOSTNAME\", \"value\": \"$SRE_MC_HOSTNAME\"}
       ]
     }]
   }" 2>&1)
