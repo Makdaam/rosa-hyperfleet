@@ -633,16 +633,69 @@ resource "aws_lambda_permission" "scheduler_invoke_worker" {
 }
 
 # -----------------------------------------------------------------------------
-# CloudWatch Log Groups (365-day retention)
+# CloudWatch Log Groups (365-day retention, KMS-encrypted)
 # Alerting handled via CW Exporter → Prometheus → PrometheusRules
 # Native Lambda metrics (Errors, Duration, Throttles, Invocations) are
 # automatically available per FunctionName in the AWS/Lambda CW namespace.
 # Custom business metrics emitted via EMF in the ZOA namespace.
 # -----------------------------------------------------------------------------
 
+resource "aws_kms_key" "lambda_logs" {
+  description             = "KMS key for ZOA Lambda CloudWatch log encryption (FedRAMP AU-09)"
+  deletion_window_in_days = 30
+  enable_key_rotation     = true
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "EnableRootAccess"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        }
+        Action   = "kms:*"
+        Resource = "*"
+      },
+      {
+        Sid    = "AllowCloudWatchLogs"
+        Effect = "Allow"
+        Principal = {
+          Service = "logs.${data.aws_region.current.name}.amazonaws.com"
+        }
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
+        ]
+        Resource = "*"
+        Condition = {
+          ArnLike = {
+            "kms:EncryptionContext:aws:logs:arn" = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${local.function_prefix}-*"
+          }
+        }
+      }
+    ]
+  })
+
+  tags = merge(local.common_tags, {
+    Name = "${local.function_prefix}-lambda-logs-kms"
+  })
+}
+
+resource "aws_kms_alias" "lambda_logs" {
+  name          = "alias/${local.function_prefix}-lambda-logs"
+  target_key_id = aws_kms_key.lambda_logs.key_id
+}
+
 resource "aws_cloudwatch_log_group" "api" {
   name              = "/aws/lambda/${aws_lambda_function.api.function_name}"
   retention_in_days = 365
+  kms_key_id        = aws_kms_key.lambda_logs.arn
+
+  depends_on = [aws_kms_key.lambda_logs]
 
   tags = merge(local.common_tags, {
     Name = "${local.function_prefix}-api-logs"
@@ -652,6 +705,9 @@ resource "aws_cloudwatch_log_group" "api" {
 resource "aws_cloudwatch_log_group" "worker" {
   name              = "/aws/lambda/${aws_lambda_function.worker.function_name}"
   retention_in_days = 365
+  kms_key_id        = aws_kms_key.lambda_logs.arn
+
+  depends_on = [aws_kms_key.lambda_logs]
 
   tags = merge(local.common_tags, {
     Name = "${local.function_prefix}-worker-logs"
