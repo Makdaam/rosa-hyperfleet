@@ -182,7 +182,7 @@ applications:
     hyperfleet:
       # @doc applications.regional-cluster.hyperfleet.oidcS3Bucket S3 bucket name the HyperFleet Operator writes OIDC discovery documents to.
       # @used-by applications.regional-cluster.hyperfleet.oidcS3Bucket _context
-      oidcS3Bucket: "hyperfleet-oidc-{{ aws_region }}"
+      oidcS3Bucket: "hypershift-regional-oidc-{{ account_id }}"
       # @doc applications.regional-cluster.hyperfleet.oidcIssuerBaseUrl OIDC issuer base URL the HyperFleet Operator advertises for discovery documents.
       # @used-by applications.regional-cluster.hyperfleet.oidcIssuerBaseUrl _context
       oidcIssuerBaseUrl: "https://hyperfleet-oidc-{{ aws_region }}.s3.{{ aws_region }}.amazonaws.com"

@@ -26,3 +26,8 @@ output "oidc_writer_role_arn" {
   description = "ARN of the oidc-writer IAM role — MC operators assume this for S3+KMS access"
   value       = aws_iam_role.oidc_writer.arn
 }
+
+output "kms_key_arn" {
+  description = "ARN of the KMS key used for OIDC bucket encryption"
+  value       = aws_kms_key.oidc.arn
+}
