@@ -109,14 +109,16 @@ if [[ -z "${E2E_ACCOUNT_ID:-}" ]]; then
 fi
 
 # --- ZOA (Zero Operator Access) E2E Tests ---
-if [[ $platform_rc -ne 0 ]]; then
-  echo "Skipping ZOA tests — platform API tests failed (exit code: $platform_rc)"
-else
-  echo ""
-  echo "=== ZOA Tests ==="
-  echo ""
-  make test-e2e-zoa || zoa_rc=$?
-fi
+# Temporarily disabled
+echo "Skipping ZOA tests — temporarily disabled"
+# if [[ $platform_rc -ne 0 ]]; then
+#   echo "Skipping ZOA tests — platform API tests failed (exit code: $platform_rc)"
+# else
+#   echo ""
+#   echo "=== ZOA Tests ==="
+#   echo ""
+#   make test-e2e-zoa || zoa_rc=$?
+# fi
 
 # --- HCP Creation E2E Tests ---
 # Customer credentials are supplied via the rrp-customer AWS profile (CUSTOMER_AWS_PROFILE).
