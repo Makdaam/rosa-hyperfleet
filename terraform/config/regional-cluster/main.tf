@@ -546,6 +546,93 @@ resource "aws_eks_pod_identity_association" "hyperfleet_operator" {
   }
 }
 
+# S3 and KMS access for OIDC infrastructure management
+resource "aws_iam_role_policy" "hyperfleet_operator_oidc" {
+  name = "${var.regional_id}-hyperfleet-operator-oidc"
+  role = aws_iam_role.hyperfleet_operator.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "S3BucketAccess"
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject",
+          "s3:ListBucket",
+        ]
+        Resource = [
+          module.regional_oidc.bucket_arn,
+          "${module.regional_oidc.bucket_arn}/*",
+        ]
+      },
+      {
+        Sid    = "KMSAccess"
+        Effect = "Allow"
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:GenerateDataKey",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey",
+        ]
+        Resource = module.regional_oidc.kms_key_arn
+      },
+    ]
+  })
+}
+
+# Secrets Manager access for OIDC private key storage
+resource "aws_iam_role_policy" "hyperfleet_operator_secrets" {
+  name = "${var.regional_id}-hyperfleet-operator-secrets"
+  role = aws_iam_role.hyperfleet_operator.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "SecretsManagerAccess"
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:CreateSecret",
+          "secretsmanager:PutSecretValue",
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret",
+          "secretsmanager:DeleteSecret",
+        ]
+        Resource = "arn:aws:secretsmanager:${var.region}:${data.aws_caller_identity.current.account_id}:secret:hyperfleet/oidc/*"
+      },
+    ]
+  })
+}
+
+# STS AssumeRole for reading customer-managed OIDC secrets (unmanaged configs)
+resource "aws_iam_role_policy" "hyperfleet_operator_assume_role" {
+  name = "${var.regional_id}-hyperfleet-operator-assume-role"
+  role = aws_iam_role.hyperfleet_operator.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AssumeCustomerRoles"
+        Effect = "Allow"
+        Action = [
+          "sts:AssumeRole",
+        ]
+        Resource = "arn:aws:iam::*:role/*"
+        Condition = {
+          StringEquals = {
+            "iam:ResourceTag/hyperfleet-access" = "true"
+          }
+        }
+      },
+    ]
+  })
+}
+
 # =============================================================================
 # CloudWatch Exporter (Pod Identity for YACE)
 # =============================================================================
