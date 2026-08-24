@@ -83,7 +83,6 @@ RUN set -euo pipefail && \
     chmod +x /usr/local/bin/oc && \
     rm -f /tmp/kubectl /tmp/README.md
 
-# skopeo is installed via microdnf (Red Hat native, supports registry-to-registry copy)
 
 # Install Terraform (GPG-verified)
 RUN set -euo pipefail && \

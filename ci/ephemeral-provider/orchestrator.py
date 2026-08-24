@@ -85,11 +85,11 @@ class EphemeralEnvOrchestrator:
         self.target_monitor: PipelineMonitor | None = None
         self.git: GitManager | None = None
 
-    def provision(self, save_state: str | None = None, save_mc_state: str | None = None):
+    def provision(self, save_rc_state: str | None = None, save_mc_state: str | None = None):
         """Provision the ephemeral environment (setup + bootstrap + wait for pipelines).
 
         Args:
-            save_state: If set, save RC terraform outputs JSON to this path after provisioning.
+            save_rc_state: If set, save RC terraform outputs JSON to this path after provisioning.
             save_mc_state: If set, save MC terraform outputs JSON to this path after provisioning.
         """
         self._setup_aws()
@@ -114,8 +114,8 @@ class EphemeralEnvOrchestrator:
         # Wait for provisioning pipelines
         self._wait_for_provision()
 
-        if save_state:
-            self._save_terraform_outputs(git, save_state)
+        if save_rc_state:
+            self._save_terraform_outputs(git, save_rc_state)
         if save_mc_state:
             self._save_mc_terraform_outputs(git, save_mc_state)
 
