@@ -1,4 +1,4 @@
-.PHONY: help terraform-fmt terraform-init terraform-validate terraform-upgrade terraform-output-management terraform-output-regional helm-lint check-rendered-files promtool-test ephemeral-provision ephemeral-teardown ephemeral-resync ephemeral-list ephemeral-shell ephemeral-bastion-rc ephemeral-bastion-mc ephemeral-post-account-shell ephemeral-port-forward-rc ephemeral-port-forward-mc ephemeral-port-forward-rc-all ephemeral-port-forward-mc-all ephemeral-sre-ui ephemeral-e2e ephemeral-dump-env int-shell int-bastion-rc int-bastion-mc int-port-forward-rc int-port-forward-mc int-port-forward-rc-all int-port-forward-mc-all int-e2e int-dump-env check-docs check-default-tags pre-push render
+.PHONY: help terraform-fmt terraform-init terraform-validate terraform-upgrade terraform-output-management terraform-output-regional helm-lint check-rendered-files promtool-test ephemeral-provision ephemeral-teardown ephemeral-resync ephemeral-list ephemeral-shell ephemeral-bastion-rc ephemeral-bastion-mc ephemeral-post-account-shell ephemeral-port-forward-rc ephemeral-port-forward-mc ephemeral-port-forward-rc-all ephemeral-port-forward-mc-all ephemeral-sre-ui ephemeral-e2e ephemeral-dump-env int-shell int-bastion-rc int-bastion-mc int-port-forward-rc int-port-forward-mc int-port-forward-rc-all int-port-forward-mc-all int-e2e int-dump-env stage-shell stage-bastion-rc stage-bastion-mc stage-port-forward-rc stage-port-forward-mc stage-port-forward-rc-all stage-port-forward-mc-all stage-e2e stage-dump-env check-docs check-default-tags pre-push render
 
 # =============================================================================
 # Local tool management
@@ -268,6 +268,39 @@ int-e2e: ## Run e2e tests against int env
 
 int-dump-env: ## Dump EKS must-gather and DB state from int env (CLUSTER=rc|mc)
 	@./scripts/dev/int-env.sh dump-env $(CLUSTER)
+
+# =============================================================================
+# Stage Environment
+# =============================================================================
+# Thin wrappers around scripts/dev/stage-env.sh.
+# Uses AWS profiles with SAML auth (account IDs from rosa-hyperfleet-internal or RRP_ACCOUNTS_STAGE).
+
+stage-shell: ## Interactive shell for Platform API access (stage)
+	@./scripts/dev/stage-env.sh shell
+
+stage-bastion-rc: ## Connect to RC bastion in stage env
+	@./scripts/dev/stage-env.sh bastion --cluster-type regional
+
+stage-bastion-mc: ## Connect to MC bastion in stage env
+	@./scripts/dev/stage-env.sh bastion --cluster-type management
+
+stage-port-forward-rc: ## Port-forward to RC service in stage env
+	@./scripts/dev/stage-env.sh port-forward --cluster-type regional
+
+stage-port-forward-mc: ## Port-forward to MC service in stage env
+	@./scripts/dev/stage-env.sh port-forward --cluster-type management
+
+stage-port-forward-rc-all: ## Port-forward all RC services in stage env
+	@./scripts/dev/stage-env.sh port-forward --cluster-type regional --all
+
+stage-port-forward-mc-all: ## Port-forward all MC services in stage env
+	@./scripts/dev/stage-env.sh port-forward --cluster-type management --all
+
+stage-e2e: ## Run e2e tests against stage env
+	@E2E_REF="$(or $(E2E_REF),main)" E2E_REPO="$(E2E_REPO)" ./scripts/dev/stage-env.sh e2e
+
+stage-dump-env: ## Dump EKS must-gather and DB state from stage env (CLUSTER=rc|mc)
+	@./scripts/dev/stage-env.sh dump-env $(CLUSTER)
 
 render: ## Render config templates
 	@uv run scripts/render.py
