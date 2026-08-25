@@ -127,7 +127,6 @@ regional_cluster:
   # @used-by regional_cluster.sre_thanos_oidc_client_id pipeline-regional-cluster-inputs/terraform.json.j2
   sre_thanos_oidc_client_id: ""
 
-  oidcS3Bucket: "hypershift-{{ eph_prefix }}-regional-oidc-{{ account_id }}"
 management_cluster_defaults:
   # @doc management_cluster_defaults.enable_bastion Default enable bastion for management clusters.
   # @used-by management_cluster_defaults.enable_bastion _context
@@ -183,7 +182,7 @@ applications:
     hyperfleet:
       # @doc applications.regional-cluster.hyperfleet.oidcS3Bucket S3 bucket name the HyperFleet Operator writes OIDC discovery documents to.
       # @used-by applications.regional-cluster.hyperfleet.oidcS3Bucket _context
-      oidcS3Bucket: "hypershift-regional-oidc-{{ account_id }}"
+      oidcS3Bucket: "hypershift-{{ eph_prefix }}-regional-oidc-{{ account_id }}"
       # @doc applications.regional-cluster.hyperfleet.oidcIssuerBaseUrl OIDC issuer base URL the HyperFleet Operator advertises for discovery documents.
       # @used-by applications.regional-cluster.hyperfleet.oidcIssuerBaseUrl _context
       oidcIssuerBaseUrl: "https://hyperfleet-oidc-{{ aws_region }}.s3.{{ aws_region }}.amazonaws.com"
