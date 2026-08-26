@@ -11,8 +11,7 @@ eksNodePool:
   - m7i
 baseDomain: us-east-1.stg0.rosa.devshift.org
 hyperfleet:
-  oidcS3Bucket: hypershift-regional-oidc-ssm:///infra/stage/us-east-1/rc/account_id
-  oidcIssuerBaseUrl: https://hyperfleet-oidc-us-east-1.s3.us-east-1.amazonaws.com
+  oidcS3Bucket: PLACEHOLDER-overridden-by-terraform-output
 pagerduty:
   enabled: false
 grafana:
