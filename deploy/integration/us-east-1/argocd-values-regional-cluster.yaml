@@ -12,7 +12,6 @@ eksNodePool:
 baseDomain: us-east-1.int0.rosa.devshift.net
 hyperfleet:
   oidcS3Bucket: hypershift-regional-oidc-ssm:///infra/integration/us-east-1/account_id
-  oidcIssuerBaseUrl: https://hyperfleet-oidc-us-east-1.s3.us-east-1.amazonaws.com
 pagerduty:
   enabled: true
 grafana:

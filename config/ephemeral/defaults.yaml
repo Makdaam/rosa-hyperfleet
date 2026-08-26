@@ -35,7 +35,6 @@ applications:
   regional-cluster:
     hyperfleet:
       oidcS3Bucket: "hypershift-{{ eph_prefix }}-regional-oidc-{{ account_id }}"
-      oidcIssuerBaseUrl: "https://hyperfleet-oidc-{{ aws_region }}.s3.{{ aws_region }}.amazonaws.com"
 
 management_cluster_defaults:
   enable_bastion: true
