@@ -53,6 +53,12 @@ variable "oidc_writer_role_arn" {
   default     = ""
 }
 
+variable "oidc_key_reader_role_arn" {
+  description = "ARN of the RC-side oidc-key-reader IAM role (MC ESO assumes this to read OIDC signing keys from Secrets Manager)"
+  type        = string
+  default     = ""
+}
+
 variable "oidc_cloudfront_domain" {
   description = "CloudFront domain name for the OIDC issuer URL (owned by the Regional Cluster)"
   type        = string

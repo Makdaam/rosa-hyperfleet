@@ -156,6 +156,7 @@ resource "aws_ecs_task_definition" "bootstrap" {
           echo "  REPOSITORY_URL: $REPOSITORY_URL"
           echo "  REPOSITORY_BRANCH: $REPOSITORY_BRANCH"
           echo "  DNS_ZONE_OPERATOR_ROLE_ARN: $DNS_ZONE_OPERATOR_ROLE_ARN"
+          echo "  OIDC_KEY_READER_ROLE_ARN: $OIDC_KEY_READER_ROLE_ARN"
 
           cat <<-SECRET_EOF | kubectl apply -f -
           apiVersion: v1
@@ -187,6 +188,7 @@ resource "aws_ecs_task_definition" "bootstrap" {
               management_clusters: "$MANAGEMENT_CLUSTERS"
               rhobs_api_url: "$RHOBS_API_URL"
               dns_zone_operator_role_arn: "$DNS_ZONE_OPERATOR_ROLE_ARN"
+              oidc_key_reader_role_arn: "$OIDC_KEY_READER_ROLE_ARN"
               zoa_table_name: "$ZOA_TABLE_NAME"
               zoa_audit_table_name: "$ZOA_AUDIT_TABLE_NAME"
               zoa_bucket_name: "$ZOA_BUCKET_NAME"

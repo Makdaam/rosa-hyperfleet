@@ -40,6 +40,7 @@ else
     _RC_REGIONAL_ID=$(jq -r '.regional_id // "regional"' "deploy/${ENVIRONMENT}/${TARGET_REGION}/pipeline-regional-cluster-inputs/terraform.json" 2>/dev/null || echo "regional")
     export DNS_ZONE_OPERATOR_ROLE_ARN="arn:aws:iam::${RESOLVED_REGIONAL_ACCOUNT_ID}:role/${_RC_REGIONAL_ID}-dns-zone-operator"
     export OIDC_WRITER_ROLE_ARN="arn:aws:iam::${RESOLVED_REGIONAL_ACCOUNT_ID}:role/${_RC_REGIONAL_ID}-oidc-writer"
+    export OIDC_KEY_READER_ROLE_ARN="arn:aws:iam::${RESOLVED_REGIONAL_ACCOUNT_ID}:role/${_RC_REGIONAL_ID}-oidc-key-reader"
 
     # Read OIDC outputs from RC terraform state. RC and MC pipelines run in
     # parallel — retry until the outputs appear or we timeout (45 min).
@@ -144,6 +145,9 @@ if [ -n "${DNS_ZONE_OPERATOR_ROLE_ARN:-}" ]; then
 fi
 if [ -n "${OIDC_WRITER_ROLE_ARN:-}" ]; then
     export TF_VAR_oidc_writer_role_arn="${OIDC_WRITER_ROLE_ARN}"
+fi
+if [ -n "${OIDC_KEY_READER_ROLE_ARN:-}" ]; then
+    export TF_VAR_oidc_key_reader_role_arn="${OIDC_KEY_READER_ROLE_ARN}"
 fi
 
 export REGION_DEPLOYMENT=$(jq -r '.region' "$DEPLOY_CONFIG_FILE")

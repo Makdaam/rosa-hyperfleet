@@ -66,6 +66,7 @@ while [ -z "$RHOBS_API_URL" ]; do
 done
 
 export DNS_ZONE_OPERATOR_ROLE_ARN="arn:aws:iam::${RESOLVED_REGIONAL_ACCOUNT_ID}:role/${_RC_REGIONAL_ID}-dns-zone-operator"
+export OIDC_KEY_READER_ROLE_ARN="arn:aws:iam::${RESOLVED_REGIONAL_ACCOUNT_ID}:role/${_RC_REGIONAL_ID}-oidc-key-reader"
 
 use_mc_account
 terraform_init_backend management-cluster "${TARGET_REGION}" "${MANAGEMENT_ID}"
