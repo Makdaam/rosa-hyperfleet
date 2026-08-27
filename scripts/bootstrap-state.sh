@@ -21,9 +21,14 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Prioritize: 1) positional arg, 2) AWS_REGION env var, 3) AWS CLI config, 4) default us-east-1
+# Prioritize: 1) positional arg, 2) AWS_REGION env var, 3) AWS CLI config (no fallback - region must be explicit)
 configured_region=$(aws configure get region 2>/dev/null || true)
-REGION="${POSITIONAL_ARGS[0]:-${AWS_REGION:-${configured_region:-us-east-1}}}"
+REGION="${POSITIONAL_ARGS[0]:-${AWS_REGION:-${configured_region}}}"
+
+if [[ -z "$REGION" ]]; then
+    echo "❌ Error: Region must be specified via positional arg, AWS_REGION env var, or AWS CLI config" >&2
+    exit 1
+fi
 
 if [[ "$CENTRAL" == "true" ]]; then
     BUCKET_NAME="terraform-state-${ACCOUNT_ID}"
