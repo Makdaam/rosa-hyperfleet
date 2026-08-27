@@ -112,6 +112,7 @@ fi
 
 RHOBS_API_URL="${RHOBS_API_URL:-}"
 DNS_ZONE_OPERATOR_ROLE_ARN="${DNS_ZONE_OPERATOR_ROLE_ARN:-}"
+OIDC_KEY_READER_ROLE_ARN="${OIDC_KEY_READER_ROLE_ARN:-}"
 
 OVERRIDES_JSON=$(jq -nc \
   --arg cluster_name "$CLUSTER_NAME" \
@@ -130,6 +131,7 @@ OVERRIDES_JSON=$(jq -nc \
   --arg loki_query_frontend_target_group_arn "$LOKI_QUERY_FRONTEND_TARGET_GROUP_ARN" \
   --arg rhobs_api_url "$RHOBS_API_URL" \
   --arg dns_zone_operator_role_arn "$DNS_ZONE_OPERATOR_ROLE_ARN" \
+  --arg oidc_key_reader_role_arn "$OIDC_KEY_READER_ROLE_ARN" \
   --arg zoa_table_name "$ZOA_TABLE_NAME" \
   --arg zoa_audit_table_name "$ZOA_AUDIT_TABLE_NAME" \
   --arg zoa_bucket_name "$ZOA_BUCKET_NAME" \
@@ -162,6 +164,7 @@ OVERRIDES_JSON=$(jq -nc \
         {name: "LOKI_QUERY_FRONTEND_TARGET_GROUP_ARN", value: $loki_query_frontend_target_group_arn},
         {name: "RHOBS_API_URL", value: $rhobs_api_url},
         {name: "DNS_ZONE_OPERATOR_ROLE_ARN", value: $dns_zone_operator_role_arn},
+        {name: "OIDC_KEY_READER_ROLE_ARN", value: $oidc_key_reader_role_arn},
         {name: "ZOA_TABLE_NAME", value: $zoa_table_name},
         {name: "ZOA_AUDIT_TABLE_NAME", value: $zoa_audit_table_name},
         {name: "ZOA_BUCKET_NAME", value: $zoa_bucket_name},

@@ -169,11 +169,12 @@ module "hypershift_oidc" {
   cluster_id       = var.management_id
   eks_cluster_name = module.management_cluster.cluster_name
 
-  oidc_bucket_name       = var.oidc_bucket_name
-  oidc_bucket_arn        = var.oidc_bucket_arn
-  oidc_bucket_region     = var.oidc_bucket_region
-  oidc_writer_role_arn   = var.oidc_writer_role_arn
-  oidc_cloudfront_domain = var.oidc_cloudfront_domain
+  oidc_bucket_name         = var.oidc_bucket_name
+  oidc_bucket_arn          = var.oidc_bucket_arn
+  oidc_bucket_region       = var.oidc_bucket_region
+  oidc_writer_role_arn     = var.oidc_writer_role_arn
+  oidc_key_reader_role_arn = var.oidc_key_reader_role_arn
+  oidc_cloudfront_domain   = var.oidc_cloudfront_domain
 }
 
 # =============================================================================
