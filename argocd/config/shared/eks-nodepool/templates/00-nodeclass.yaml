@@ -8,10 +8,10 @@ metadata:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   # Karpenter alias doesn't support FIPS variants: https://github.com/aws/karpenter-provider-aws/issues/8198
-  amiFamily: Bottlerocket
+  amiFamily: {{ if .Values.eksNodePool.ami }}{{ .Values.eksNodePool.ami.family }}{{ else }}Bottlerocket{{ end }}
   amiSelectorTerms:
-    {{- if .Values.eksNodePool.amiSelectorTerms }}
-    {{- toYaml .Values.eksNodePool.amiSelectorTerms | nindent 4 }}
+    {{- if .Values.eksNodePool.ami }}
+    - id: {{ .Values.eksNodePool.ami.id }}
     {{- else }}
     - name: bottlerocket-aws-k8s-1.34-fips-x86_64-*
     {{- end }}
