@@ -760,8 +760,9 @@ class EphemeralEnvOrchestrator:
                 text=True,
                 timeout=60,
             )
-            if result.returncode == 0 and result.stdout.strip():
-                return result.stdout.strip()
+            url = result.stdout.strip()
+            if result.returncode == 0 and url.startswith("http"):
+                return url
 
             log.warning("terraform output api_gateway_invoke_url returned empty or failed (rc=%d)", result.returncode)
             return None
