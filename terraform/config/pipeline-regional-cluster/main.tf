@@ -379,6 +379,7 @@ resource "aws_codepipeline" "central_pipeline" {
             "terraform/config/pipeline-regional-cluster/**",
             "terraform/config/regional-cluster/**",
             "terraform/modules/zoa/**",
+            "terraform/modules/zoa-lambda/**",
             "scripts/buildspec/build-zoa-lambda.sh",
           ]
         }
