@@ -34,6 +34,9 @@ aws:
   # @doc aws.management_cluster_account_id Default account for MCs when entry has no account_id.
   # @used-by aws.management_cluster_account_id _context
   management_cluster_account_id: "ssm:///infra/{{ environment }}/{{ aws_region }}/{{ cluster_prefix }}/account_id"
+  # @doc aws.child_admin_role_name Name of the IAM role the pipelines assume in RC/MC child accounts for state-bucket bootstrap (hop 1) and infra apply (hop 2). Defaults to the AWS Organizations role; override per environment to use a scoped day-2 role.
+  # @used-by aws.child_admin_role_name _context
+  child_admin_role_name: "OrganizationAccountAccessRole"
 
 dns:
   # @doc dns.domain Base domain for the environment. Must be set per environment. See config/ephemeral/defaults.yaml for how the ephemeral template selects between CI and dev account pools.
@@ -179,7 +182,10 @@ applications:
     hyperfleet:
       # @doc applications.regional-cluster.hyperfleet.oidcS3Bucket S3 bucket name the HyperFleet Operator writes OIDC discovery documents to.
       # @used-by applications.regional-cluster.hyperfleet.oidcS3Bucket _context
-      oidcS3Bucket: "hypershift-regional-oidc-{{ account_id }}"
+      # NOTE: This value is overridden in the ApplicationSet valuesObject (config/templates/argocd-bootstrap/applicationset.yaml.j2)
+      # with the actual bucket name from terraform output (oidc_bucket_name), threaded through cluster secret annotations.
+      # The placeholder below is kept for documentation but is not used.
+      oidcS3Bucket: "PLACEHOLDER-overridden-by-terraform-output"
     pagerduty:
       # @doc applications.regional-cluster.pagerduty.enabled Enable PagerDuty alerting in the monitoring stack.
       # @used-by applications.regional-cluster.pagerduty.enabled _context

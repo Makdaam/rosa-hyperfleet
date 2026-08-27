@@ -14,6 +14,9 @@ locals {
   name_prefix    = var.management_id
   account_suffix = substr(data.aws_caller_identity.current.account_id, -8, 8)
 
+  # Explicit feature flag: use shared CodeBuild role (stage) or per-MC role (ephemeral/integration)
+  enable_shared_mc_role = var.mc_codebuild_role_arn != ""
+
   # Resource naming: {name_prefix}-{resource-type}
   artifact_bucket_name               = "${local.name_prefix}-artifacts-${local.account_suffix}"
   codebuild_role_name                = "${local.name_prefix}-codebuild-role"
@@ -26,6 +29,9 @@ locals {
 
   # Repository URL constructed from github_repository variable
   repository_url = "https://github.com/${var.github_repository}.git"
+
+  # Use shared role if enabled (stage), otherwise use per-MC role created below (ephemeral/integration)
+  codebuild_role_arn = local.enable_shared_mc_role ? var.mc_codebuild_role_arn : aws_iam_role.codebuild_role[0].arn
 }
 
 # Use shared GitHub Connection (passed from pipeline-provisioner)
@@ -34,8 +40,12 @@ data "aws_codestarconnections_connection" "github" {
 }
 
 # IAM Role for CodeBuild
+# Only create this role if shared role mode is disabled.
+# When enable_shared_mc_role is true (stage), use the shared role from central-account-bootstrap.
+# When false (ephemeral/integration), create a per-MC role.
 resource "aws_iam_role" "codebuild_role" {
-  name = local.codebuild_role_name
+  count = local.enable_shared_mc_role ? 0 : 1
+  name  = local.codebuild_role_name
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -52,7 +62,8 @@ resource "aws_iam_role" "codebuild_role" {
 }
 
 resource "aws_iam_role_policy" "codebuild_policy" {
-  role = aws_iam_role.codebuild_role.name
+  count = local.enable_shared_mc_role ? 0 : 1
+  role  = aws_iam_role.codebuild_role[0].name
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -105,7 +116,7 @@ resource "aws_iam_role_policy" "codebuild_policy" {
       {
         Effect   = "Allow"
         Action   = "sts:AssumeRole"
-        Resource = "arn:aws:iam::*:role/OrganizationAccountAccessRole"
+        Resource = "arn:aws:iam::*:role/${var.child_admin_role_name}"
       },
       # Permissions for same-account operations (when TARGET_ACCOUNT_ID == CENTRAL_ACCOUNT_ID)
       # In production, cross-account deployments should use OrganizationAccountAccessRole
@@ -329,7 +340,7 @@ resource "aws_s3_bucket_public_access_block" "pipeline_artifact" {
 # CodeBuild Project - Apply
 resource "aws_codebuild_project" "management_apply" {
   name          = local.apply_project_name
-  service_role  = aws_iam_role.codebuild_role.arn
+  service_role  = local.codebuild_role_arn
   build_timeout = 60
 
   artifacts {
@@ -376,6 +387,11 @@ resource "aws_codebuild_project" "management_apply" {
       name  = "PLATFORM_IMAGE"
       value = var.codebuild_image
     }
+    # IAM role name assumed in the target (child) account for infra apply (hop 2)
+    environment_variable {
+      name  = "CHILD_ADMIN_ROLE_NAME"
+      value = var.child_admin_role_name
+    }
   }
 
   source {
@@ -387,7 +403,7 @@ resource "aws_codebuild_project" "management_apply" {
 # CodeBuild Project - Bootstrap ArgoCD
 resource "aws_codebuild_project" "management_bootstrap" {
   name          = local.bootstrap_project_name
-  service_role  = aws_iam_role.codebuild_role.arn
+  service_role  = local.codebuild_role_arn
   build_timeout = 30
 
   artifacts {
@@ -431,6 +447,11 @@ resource "aws_codebuild_project" "management_bootstrap" {
       name  = "REPOSITORY_BRANCH"
       value = var.repository_branch
     }
+    # IAM role name assumed in the target (child) account for argocd bootstrap (hop 2)
+    environment_variable {
+      name  = "CHILD_ADMIN_ROLE_NAME"
+      value = var.child_admin_role_name
+    }
   }
 
   source {
@@ -442,7 +463,7 @@ resource "aws_codebuild_project" "management_bootstrap" {
 # CodeBuild Project - Register MC with Regional Cluster API
 resource "aws_codebuild_project" "register" {
   name          = local.register_project_name
-  service_role  = aws_iam_role.codebuild_role.arn
+  service_role  = local.codebuild_role_arn
   build_timeout = 15
 
   artifacts {
@@ -475,6 +496,11 @@ resource "aws_codebuild_project" "register" {
       name  = "ENVIRONMENT"
       value = var.target_environment
     }
+    # IAM role name assumed in the target (child) account for cross-account calls (hop 2)
+    environment_variable {
+      name  = "CHILD_ADMIN_ROLE_NAME"
+      value = var.child_admin_role_name
+    }
   }
 
   source {
@@ -486,7 +512,7 @@ resource "aws_codebuild_project" "register" {
 # CodeBuild Project - kube-applier DynamoDB provisioning (runs in RC account)
 resource "aws_codebuild_project" "kube_applier_dynamodb" {
   name          = local.kube_applier_dynamodb_project_name
-  service_role  = aws_iam_role.codebuild_role.arn
+  service_role  = local.codebuild_role_arn
   build_timeout = 15
 
   artifacts {
@@ -515,6 +541,11 @@ resource "aws_codebuild_project" "kube_applier_dynamodb" {
       name  = "ENVIRONMENT"
       value = var.target_environment
     }
+    # IAM role name assumed in the target (child) account for cross-account calls (hop 2)
+    environment_variable {
+      name  = "CHILD_ADMIN_ROLE_NAME"
+      value = var.child_admin_role_name
+    }
   }
 
   source {
@@ -527,9 +558,12 @@ resource "aws_codebuild_project" "kube_applier_dynamodb" {
 # Pipelines auto-trigger on creation; without this delay the Source action
 # can fail with "Access Denied" on the CodeStar connection.
 resource "time_sleep" "iam_propagation" {
+  # When using per-MC role, wait for both policies to propagate.
+  # When using shared role (stage), only wait for pipeline policy
+  # (shared role was created in central-account-bootstrap well before this).
   depends_on = [
-    aws_iam_role_policy.codebuild_policy,
     aws_iam_role_policy.codepipeline_policy,
+    aws_iam_role_policy.codebuild_policy,
   ]
   create_duration = "15s"
 }

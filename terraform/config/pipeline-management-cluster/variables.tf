@@ -43,6 +43,12 @@ variable "target_environment" {
   default     = "integration"
 }
 
+variable "child_admin_role_name" {
+  type        = string
+  description = "IAM role name assumed in the target (child) account for infra apply and ArgoCD bootstrap. Defaults to the AWS Organizations role; override per environment."
+  default     = "OrganizationAccountAccessRole"
+}
+
 variable "repository_url" {
   type        = string
   description = "Git repository URL for cluster configuration"
@@ -62,6 +68,17 @@ variable "management_id" {
 variable "codebuild_image" {
   type        = string
   description = "ECR image URI for CodeBuild projects (platform image with pre-installed tools)"
+}
+
+variable "mc_codebuild_role_arn" {
+  type        = string
+  description = "ARN of the shared IAM role used by MC CodeBuild projects (created in central-account-bootstrap). If empty, creates a per-MC role (default behavior)."
+  default     = ""
+
+  validation {
+    condition     = var.mc_codebuild_role_arn == "" || can(regex("^arn:aws:iam::[0-9]{12}:role/", var.mc_codebuild_role_arn))
+    error_message = "mc_codebuild_role_arn must be empty or a valid IAM role ARN (arn:aws:iam::<account>:role/<name>)"
+  }
 }
 
 # =============================================================================
