@@ -10,6 +10,10 @@ eksNodePool:
   disruption:
     consolidationPolicy: WhenEmpty
     consolidateAfter: 60s
+  # Override amiSelectorTerms for the EC2NodeClass. When empty, the default
+  # name-based selector (bottlerocket FIPS) is used. Set to a list of terms
+  # (e.g. [{id: ami-0abc123}]) to pin a specific AMI.
+  amiSelectorTerms: []
 
 global:
   cluster_name: ""

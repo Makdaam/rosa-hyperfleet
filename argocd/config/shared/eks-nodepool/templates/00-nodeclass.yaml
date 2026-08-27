@@ -10,7 +10,11 @@ spec:
   # Karpenter alias doesn't support FIPS variants: https://github.com/aws/karpenter-provider-aws/issues/8198
   amiFamily: Bottlerocket
   amiSelectorTerms:
+    {{- if .Values.eksNodePool.amiSelectorTerms }}
+    {{- toYaml .Values.eksNodePool.amiSelectorTerms | nindent 4 }}
+    {{- else }}
     - name: bottlerocket-aws-k8s-1.34-fips-x86_64-*
+    {{- end }}
   instanceProfile: {{ $clusterName }}-karpenter-node-role
   subnetSelectorTerms:
     - tags:

@@ -39,6 +39,9 @@ applications:
 management_cluster_defaults:
   enable_bastion: true
   node_instance_families: ["m8i-flex", "m7i-flex"]
+  # Override to test a specific AMI on MC nodes. Example: [{id: ami-0abc123}]
+  # Empty list (default) uses the standard bottlerocket FIPS name selector.
+  karpenter_ami_selector_terms: []
 
 observability:
   pagerduty:

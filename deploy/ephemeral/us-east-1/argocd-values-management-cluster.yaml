@@ -9,6 +9,7 @@ eksNodePool:
   instanceFamilies:
   - m8i-flex
   - m7i-flex
+  amiSelectorTerms: []
 hypershift:
   oidcStorageS3Bucket:
     name: hypershift-mc-us-east-1
