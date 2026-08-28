@@ -168,6 +168,9 @@ def resolve_templates(value: Any, context: dict[str, Any]) -> Any:
             native = _resolve_var_path(context, m.group(1))
             if native is not _MISSING and isinstance(native, (list, dict)):
                 return native
+            if native is not _MISSING and native is None:
+                # Preserve None values instead of converting to string "None"
+                return None
             if native is not _MISSING and isinstance(native, (int, float, bool)):
                 native_type = type(native)
             elif native is _MISSING:
