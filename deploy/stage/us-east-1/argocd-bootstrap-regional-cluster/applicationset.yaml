@@ -94,10 +94,6 @@ spec:
                   dynamodbRegion: '{{ .metadata.annotations.dynamodb_region }}'
                   dynamodbPrefix: '{{ .metadata.annotations.dynamodb_prefix }}'
                   oidcIssuerBaseURL: 'https://{{ .metadata.annotations.oidc_cloudfront_domain }}'
-              zoa:
-                tableName: '{{ .metadata.annotations.zoa_table_name }}'
-                auditTableName: '{{ .metadata.annotations.zoa_audit_table_name }}'
-                bucketName: '{{ .metadata.annotations.zoa_bucket_name }}'
               rateLimit:
                 redisEndpoint: '{{ .metadata.annotations.redis_endpoint }}'
             # HyperFleet Operator values (keys must match chart's values.yaml structure)

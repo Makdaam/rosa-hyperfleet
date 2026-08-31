@@ -443,9 +443,6 @@ module "zoa" {
   mc_ou_path       = var.mc_ou_path
   environment      = var.environment
   zoa_image_tag    = var.zoa_image_tag
-
-  platform_api_role_id  = module.authz.frontend_api_role_name
-  platform_api_role_arn = module.authz.frontend_api_role_arn
 }
 
 module "zoa_lambda" {

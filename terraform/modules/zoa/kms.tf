@@ -38,18 +38,6 @@ resource "aws_kms_key_policy" "zoa" {
         Resource = "*"
       },
       {
-        Sid    = "AllowPlatformAPIAccess"
-        Effect = "Allow"
-        Principal = {
-          AWS = var.platform_api_role_arn
-        }
-        Action = [
-          "kms:Decrypt",
-          "kms:GenerateDataKey",
-        ]
-        Resource = "*"
-      },
-      {
         Sid    = "AllowLocalLambdaKMS"
         Effect = "Allow"
         Principal = {
@@ -63,36 +51,6 @@ resource "aws_kms_key_policy" "zoa" {
         Condition = {
           ArnLike = {
             "aws:PrincipalArn" = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/*-zoa-lambda"
-          }
-        }
-      },
-      {
-        Sid    = "AllowJobRoleAccess"
-        Effect = "Allow"
-        Principal = {
-          AWS = aws_iam_role.job.arn
-        }
-        Action = [
-          "kms:GenerateDataKey",
-        ]
-        Resource = "*"
-      },
-      {
-        Sid    = "AllowCrossAccountJobKMS"
-        Effect = "Allow"
-        Principal = {
-          AWS = "*"
-        }
-        Action = [
-          "kms:GenerateDataKey",
-        ]
-        Resource = "*"
-        Condition = {
-          "ForAnyValue:StringLike" = {
-            "aws:PrincipalOrgPaths" = "${var.mc_ou_path}*"
-          }
-          StringLike = {
-            "aws:PrincipalArn" = "arn:*:iam::*:role/*-zoa-job"
           }
         }
       },
