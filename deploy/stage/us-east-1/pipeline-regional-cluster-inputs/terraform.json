@@ -33,5 +33,5 @@
   "hyperfleet_db_skip_final_snapshot": false,
   "hyperfleet_db_performance_insights_enabled": true,
   "hyperfleet_db_monitoring_interval": 60,
-  "management_clusters_info": [{"account_id": "ssm:///infra/stage/us-east-1/mc01/account_id", "id": "mc01"}, {"account_id": "ssm:///infra/stage/us-east-1/mc02/account_id", "id": "mc02"}]
+  "management_clusters_info": [{"account_id": "ssm:///infra/stage/us-east-1/mc01/account_id", "id": "mc01"}]
 }
