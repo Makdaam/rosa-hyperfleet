@@ -2,3 +2,4 @@ provision_mcs:
   mc01: {}
   mc02:
     delete: true
+    delete_pipeline: true
