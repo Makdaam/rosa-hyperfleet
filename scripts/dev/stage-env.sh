@@ -112,7 +112,7 @@ setup_aws_config() {
     # instead of OrganizationAccountAccessRole
     cat > "$AWS_CONFIG_FILE" <<AWSCFG
 [profile rrp-stage-admin]
-credential_process = uv run ${SCRIPT_DIR}/cached_saml_credentials_process.py ${CENTRAL_ACCOUNT} ${CENTRAL_ACCOUNT}-rrp-stage-admin
+credential_process = uv run ${SCRIPT_DIR}/cached_saml_credentials_process.py ${CENTRAL_ACCOUNT} ${CENTRAL_ACCOUNT}-rosa-hyperfleet-stage-admin
 region = ${STAGE_REGION}
 duration_seconds = 3600
 
