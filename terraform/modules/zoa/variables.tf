@@ -13,16 +13,6 @@ variable "environment" {
   type        = string
 }
 
-variable "platform_api_role_id" {
-  description = "ID of the existing IAM role for Platform API (from authz module), used for policy attachment"
-  type        = string
-}
-
-variable "platform_api_role_arn" {
-  description = "ARN of the existing IAM role for Platform API (from authz module), used in KMS key policy"
-  type        = string
-}
-
 variable "billing_mode" {
   description = "DynamoDB billing mode"
   type        = string

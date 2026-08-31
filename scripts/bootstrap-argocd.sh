@@ -71,9 +71,6 @@ if [[ "$CLUSTER_TYPE" == "regional-cluster" ]]; then
     LOKI_KMS_KEY_ARN=$(echo "$OUTPUTS" | jq -r '.loki_kms_key_arn.value // ""')
     LOKI_DISTRIBUTOR_TARGET_GROUP_ARN=$(echo "$OUTPUTS" | jq -r '.loki_distributor_target_group_arn.value // ""')
     LOKI_QUERY_FRONTEND_TARGET_GROUP_ARN=$(echo "$OUTPUTS" | jq -r '.loki_query_frontend_target_group_arn.value // ""')
-    ZOA_TABLE_NAME=$(echo "$OUTPUTS" | jq -r '.zoa_table_name.value // ""')
-    ZOA_AUDIT_TABLE_NAME=$(echo "$OUTPUTS" | jq -r '.zoa_audit_table_name.value // ""')
-    ZOA_BUCKET_NAME=$(echo "$OUTPUTS" | jq -r '.zoa_bucket_name.value // ""')
     OIDC_BUCKET_NAME=$(echo "$OUTPUTS" | jq -r '.oidc_bucket_name.value // ""')
     OIDC_CLOUDFRONT_DOMAIN=$(echo "$OUTPUTS" | jq -r '.oidc_cloudfront_domain.value // ""')
     SRE_GRAFANA_TARGET_GROUP_ARN=$(echo "$OUTPUTS" | jq -r '.sre_grafana_target_group_arn.value // ""')
@@ -96,9 +93,6 @@ else
     LOKI_KMS_KEY_ARN=""
     LOKI_DISTRIBUTOR_TARGET_GROUP_ARN=""
     LOKI_QUERY_FRONTEND_TARGET_GROUP_ARN=""
-    ZOA_TABLE_NAME=""
-    ZOA_AUDIT_TABLE_NAME=""
-    ZOA_BUCKET_NAME=""
     OIDC_BUCKET_NAME=""
     OIDC_CLOUDFRONT_DOMAIN=""
     SRE_GRAFANA_TARGET_GROUP_ARN=""
@@ -132,9 +126,6 @@ OVERRIDES_JSON=$(jq -nc \
   --arg rhobs_api_url "$RHOBS_API_URL" \
   --arg dns_zone_operator_role_arn "$DNS_ZONE_OPERATOR_ROLE_ARN" \
   --arg oidc_key_reader_role_arn "$OIDC_KEY_READER_ROLE_ARN" \
-  --arg zoa_table_name "$ZOA_TABLE_NAME" \
-  --arg zoa_audit_table_name "$ZOA_AUDIT_TABLE_NAME" \
-  --arg zoa_bucket_name "$ZOA_BUCKET_NAME" \
   --arg oidc_bucket_name "$OIDC_BUCKET_NAME" \
   --arg oidc_cloudfront_domain "$OIDC_CLOUDFRONT_DOMAIN" \
   --arg sre_grafana_target_group_arn "$SRE_GRAFANA_TARGET_GROUP_ARN" \
@@ -165,9 +156,6 @@ OVERRIDES_JSON=$(jq -nc \
         {name: "RHOBS_API_URL", value: $rhobs_api_url},
         {name: "DNS_ZONE_OPERATOR_ROLE_ARN", value: $dns_zone_operator_role_arn},
         {name: "OIDC_KEY_READER_ROLE_ARN", value: $oidc_key_reader_role_arn},
-        {name: "ZOA_TABLE_NAME", value: $zoa_table_name},
-        {name: "ZOA_AUDIT_TABLE_NAME", value: $zoa_audit_table_name},
-        {name: "ZOA_BUCKET_NAME", value: $zoa_bucket_name},
         {name: "OIDC_BUCKET_NAME", value: $oidc_bucket_name},
         {name: "OIDC_CLOUDFRONT_DOMAIN", value: $oidc_cloudfront_domain},
         {name: "SRE_GRAFANA_TARGET_GROUP_ARN", value: $sre_grafana_target_group_arn},

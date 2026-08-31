@@ -97,7 +97,6 @@ go install github.com/onsi/ginkgo/v2/ginkgo@v2.28.1
 export PATH="$(go env GOPATH)/bin:${PATH}"
 
 platform_rc=0
-zoa_rc=0
 hcp_rc=0
 monitoring_rc=0
 make test-e2e-api || platform_rc=$?
@@ -107,18 +106,6 @@ if [[ -z "${E2E_ACCOUNT_ID:-}" ]]; then
   export E2E_ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
   echo "Regional account ID: ${E2E_ACCOUNT_ID}"
 fi
-
-# --- ZOA (Zero Operator Access) E2E Tests ---
-# Temporarily disabled
-echo "Skipping ZOA tests — temporarily disabled"
-# if [[ $platform_rc -ne 0 ]]; then
-#   echo "Skipping ZOA tests — platform API tests failed (exit code: $platform_rc)"
-# else
-#   echo ""
-#   echo "=== ZOA Tests ==="
-#   echo ""
-#   make test-e2e-zoa || zoa_rc=$?
-# fi
 
 # --- HCP Creation E2E Tests ---
 # Customer credentials are supplied via the rrp-customer AWS profile (CUSTOMER_AWS_PROFILE).
@@ -190,7 +177,7 @@ fi
 
 # HCP test failures collect logs via PRE_CLEANUP_HOOK in the test's DeferCleanup
 # (before HCP deletion). Only collect here for non-HCP failures.
-if [[ $platform_rc -ne 0 ]] || [[ $zoa_rc -ne 0 ]] || [[ $monitoring_rc -ne 0 ]]; then
+if [[ $platform_rc -ne 0 ]] || [[ $monitoring_rc -ne 0 ]]; then
     # Logs are left in S3 rather than added to public CI artifacts because
     # they may contain sensitive data that cannot be reliably redacted.
     # The S3 URIs are printed below for manual retrieval.
@@ -201,7 +188,7 @@ if [[ $platform_rc -ne 0 ]] || [[ $zoa_rc -ne 0 ]] || [[ $monitoring_rc -ne 0 ]]
 fi
 
 echo ""
-echo "E2E results: platform=$platform_rc zoa=$zoa_rc hcp=$hcp_rc monitoring=$monitoring_rc"
-if [[ $platform_rc -ne 0 ]] || [[ $zoa_rc -ne 0 ]] || [[ $hcp_rc -ne 0 ]] || [[ $monitoring_rc -ne 0 ]]; then
+echo "E2E results: platform=$platform_rc hcp=$hcp_rc monitoring=$monitoring_rc"
+if [[ $platform_rc -ne 0 ]] || [[ $hcp_rc -ne 0 ]] || [[ $monitoring_rc -ne 0 ]]; then
     exit 1
 fi

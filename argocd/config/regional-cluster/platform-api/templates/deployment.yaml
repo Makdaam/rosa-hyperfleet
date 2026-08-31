@@ -15,8 +15,6 @@ spec:
       labels:
         app: {{ .Values.platformApi.app.name }}
       annotations:
-        checksum/zoa-job-config: {{ include (print $.Template.BasePath "/zoa-job-config-configmap.yaml") . | sha256sum }}
-        checksum/zoa-ta-templates: {{ include (print $.Template.BasePath "/zoa-templates-configmap.yaml") . | sha256sum }}
         {{- if .Values.platformApi.rateLimit.enabled }}
         checksum/rate-limits: {{ include (print $.Template.BasePath "/ratelimit-configmap.yaml") . | sha256sum }}
         {{- end }}
@@ -58,20 +56,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.platformApi.hyperfleetdb.secretName | default "hyperfleet-db-dsn" }}
                   key: {{ .Values.platformApi.hyperfleetdb.secretKey | default "dsn" }}
-            {{- if .Values.platformApi.zoa.enabled }}
-            - name: ZOA_ENABLED
-              value: "true"
-            - name: ZOA_TABLE_NAME
-              value: {{ .Values.platformApi.zoa.tableName | quote }}
-            - name: ZOA_BUCKET_NAME
-              value: {{ .Values.platformApi.zoa.bucketName | quote }}
-            - name: ZOA_AUDIT_TABLE_NAME
-              value: {{ .Values.platformApi.zoa.auditTableName | quote }}
-            - name: ZOA_TEMPLATES_DIR
-              value: /etc/zoa/templates
-            - name: ZOA_JOB_CONFIG_DIR
-              value: /etc/zoa/job-config
-            {{- end }}
             {{- if .Values.platformApi.rateLimit.enabled }}
             - name: RATE_LIMIT_ENABLED
               value: "true"
@@ -80,21 +64,11 @@ spec:
             - name: REDIS_ENDPOINT
               value: {{ .Values.platformApi.rateLimit.redisEndpoint | quote }}
             {{- end }}
-          {{- if or .Values.platformApi.zoa.enabled .Values.platformApi.rateLimit.enabled }}
-          volumeMounts:
-          {{- if .Values.platformApi.zoa.enabled }}
-            - name: zoa-templates
-              mountPath: /etc/zoa/templates
-              readOnly: true
-            - name: zoa-job-config
-              mountPath: /etc/zoa/job-config
-              readOnly: true
-          {{- end }}
           {{- if .Values.platformApi.rateLimit.enabled }}
+          volumeMounts:
             - name: rate-limits
               mountPath: /etc/platform-api/rate-limits
               readOnly: true
-          {{- end }}
           {{- end }}
           ports:
             - name: api
@@ -168,14 +142,6 @@ spec:
         - name: envoy-config
           configMap:
             name: envoy-config
-        {{- if .Values.platformApi.zoa.enabled }}
-        - name: zoa-templates
-          configMap:
-            name: zoa-ta-templates
-        - name: zoa-job-config
-          configMap:
-            name: zoa-job-config
-        {{- end }}
         {{- if .Values.platformApi.rateLimit.enabled }}
         - name: rate-limits
           configMap:

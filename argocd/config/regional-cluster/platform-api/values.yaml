@@ -80,26 +80,6 @@ platformApi:
     arn: "PLACEHOLDER"
     targetType: ip
 
-  # ZOA (Zero Operator Access) configuration
-  zoa:
-    enabled: true
-    tableName: ""
-    auditTableName: ""
-    bucketName: ""
-    jobImage: "quay.io/slopezz/zoa-tools:e777d69"
-    ttlSeconds: "3600"
-    executionTimeoutSeconds: "1800"
-    writeCooldownSeconds: "300"
-    maxConcurrentPerTarget: "10"
-    dynamodbTTLDays: "365"
-    jobResources:
-      requests:
-        cpu: "25m"
-        memory: "64Mi"
-      limits:
-        cpu: "250m"
-        memory: "256Mi"
-
   # ServiceMonitor for Prometheus scraping
   serviceMonitor:
     enabled: true
