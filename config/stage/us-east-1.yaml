@@ -1,3 +1,4 @@
 provision_mcs:
   mc01: {}
-  mc02: {}
+  mc02:
+    delete: true

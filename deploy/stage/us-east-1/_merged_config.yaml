@@ -247,4 +247,5 @@ applications:
 # These are now part of the regional_cluster stanza above.
 provision_mcs:
   mc01: {}
-  mc02: {}
+  mc02:
+    delete: true
