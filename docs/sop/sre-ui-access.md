@@ -1,18 +1,20 @@
-# SRE UI Access — Integration Environment
+# SRE UI Access
 
-Browser-based access to Grafana, ArgoCD, Prometheus, and Thanos for the
-integration environment via the SRE UI ALB.
+Browser-based access to Grafana, ArgoCD, Prometheus, and Thanos via the SRE UI ALB.
 
 ## Prerequisites
 
 1. **Red Hat VPN** — required for the corporate proxy to function.
-2. **Browser proxy configured** — traffic to `*.sre.us-east-1.int0.rosa.devshift.net`
-   must route through `squid.corp.redhat.com:3128`. See
-   [Browser proxy configuration](#browser-proxy-configuration) below.
+2. **Browser proxy configured** — traffic to SRE UI domains must route through
+   `squid.corp.redhat.com:3128`. See
+   [Browser proxy configuration](#browser-proxy-configuration) below for
+   environment-specific wildcards.
 3. **Red Hat employee account** — authentication via Red Hat SSO
    (`auth.stage.redhat.com`).
 
-## URLs
+## Integration Environment
+
+### URLs
 
 | Tool       | URL                                                     | Purpose                      |
 | ---------- | ------------------------------------------------------- | ---------------------------- |
@@ -20,6 +22,21 @@ integration environment via the SRE UI ALB.
 | ArgoCD     | https://argocd.sre.us-east-1.int0.rosa.devshift.net     | GitOps application status    |
 | Prometheus | https://prometheus.sre.us-east-1.int0.rosa.devshift.net | Raw metric queries (RC)      |
 | Thanos     | https://thanos.sre.us-east-1.int0.rosa.devshift.net     | Aggregated metrics (RC + MC) |
+
+**Proxy wildcard:** `*.sre.us-east-1.int0.rosa.devshift.net`
+
+## Stage Environment
+
+### URLs
+
+| Tool       | URL                                                     | Purpose                      |
+| ---------- | ------------------------------------------------------- | ---------------------------- |
+| Grafana    | https://grafana.sre.us-east-1.stg0.rosa.devshift.org    | Metrics dashboards and logs  |
+| ArgoCD     | https://argocd.sre.us-east-1.stg0.rosa.devshift.org     | GitOps application status    |
+| Prometheus | https://prometheus.sre.us-east-1.stg0.rosa.devshift.org | Raw metric queries (RC)      |
+| Thanos     | https://thanos.sre.us-east-1.stg0.rosa.devshift.org     | Aggregated metrics (RC + MC) |
+
+**Proxy wildcard:** `*.sre.us-east-1.stg0.rosa.devshift.org`
 
 ## Authentication
 
@@ -38,8 +55,8 @@ Hat credentials or via Kerberos SSO. Sessions last 8 hours.
 ## Browser proxy configuration
 
 The ALB only accepts traffic from Red Hat corporate proxy egress IPs. Configure
-your browser to proxy `*.sre.us-east-1.int0.rosa.devshift.net` through
-`squid.corp.redhat.com:3128`. The proxy is only reachable from the Red Hat VPN.
+your browser to proxy SRE UI domains through `squid.corp.redhat.com:3128`. The
+proxy is only reachable from the Red Hat VPN.
 
 ### Chrome — ZeroOmega
 
@@ -51,10 +68,15 @@ from the Chrome Web Store.
    - Protocol: `HTTP`
    - Server: `squid.corp.redhat.com`
    - Port: `3128`
-3. In the **Auto Switch** profile add a condition:
-   - Condition type: `Host wildcard`
-   - Condition details: `*.sre.us-east-1.int0.rosa.devshift.net`
-   - Profile: `hyperfleet-sre`
+3. In the **Auto Switch** profile add conditions for each environment:
+   - **Integration:**
+     - Condition type: `Host wildcard`
+     - Condition details: `*.sre.us-east-1.int0.rosa.devshift.net`
+     - Profile: `hyperfleet-sre`
+   - **Stage:**
+     - Condition type: `Host wildcard`
+     - Condition details: `*.sre.us-east-1.stg0.rosa.devshift.org`
+     - Profile: `hyperfleet-sre`
 4. Click **Apply changes** and activate the **Auto Switch** profile.
 
 ### Firefox — FoxyProxy
@@ -67,9 +89,9 @@ Install [FoxyProxy](https://addons.mozilla.org/firefox/addon/foxyproxy-standard/
    - Type: `HTTP`
    - Hostname: `squid.corp.redhat.com`
    - Port: `3128`
-3. Under **URL Patterns** add:
-   - Pattern: `*.sre.us-east-1.int0.rosa.devshift.net`
-   - Type: `Wildcard`
+3. Under **URL Patterns** add both environment wildcards:
+   - **Integration:** Pattern: `*.sre.us-east-1.int0.rosa.devshift.net`, Type: `Wildcard`
+   - **Stage:** Pattern: `*.sre.us-east-1.stg0.rosa.devshift.org`, Type: `Wildcard`
 4. Save and enable FoxyProxy.
 
 ## Troubleshooting
