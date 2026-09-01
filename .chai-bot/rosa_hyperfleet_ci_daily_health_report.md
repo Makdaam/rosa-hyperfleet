@@ -86,11 +86,13 @@ stage:         ✅    ✅    ✅    ✅    ✅    ❌    ✅    ✅    ✅    �
 
 **Overall CI health** (based on today's run status for each job):
 
-- :large_green_circle: All jobs passing (3/3) - all today's runs completed successfully
-- :large_yellow_circle: Mixed status (1-2/3) - some passing, some failing/running/scheduled
-- :red_circle: All jobs failing (0/3) - all today's runs failed
-- :hourglass_flowing_sand: Pending — one or more jobs still running/scheduled (after retries exhausted)
+Evaluate status in this order:
+
 - :white_circle: No runs today — no runs were triggered today for any job
+- :hourglass_flowing_sand: Pending — one or more jobs are still running or scheduled after retries
+- :large_green_circle: All jobs passing (3/3) — all today's runs completed successfully
+- :red_circle: All jobs failing (0/3) — all today's runs failed
+- :large_yellow_circle: Mixed status — all other combinations, including partial no-run states
 
 **Individual job health** (based on today's run):
 
