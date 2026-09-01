@@ -170,6 +170,10 @@ Examples:
 | Integration | Thanos Ruler   | `thanos-ruler.sre.us-east-1.int0.rosa.devshift.net`   |
 | Integration | ZOA Console    | `zoa.sre.us-east-1.int0.rosa.devshift.net`            |
 | Integration | Prometheus     | `prometheus.sre.us-east-1.int0.rosa.devshift.net`     |
+| Stage       | Grafana        | `grafana.sre.us-east-1.stg0.rosa.devshift.org`        |
+| Stage       | ArgoCD         | `argocd.sre.us-east-1.stg0.rosa.devshift.org`         |
+| Stage       | Prometheus     | `prometheus.sre.us-east-1.stg0.rosa.devshift.org`     |
+| Stage       | Thanos         | `thanos.sre.us-east-1.stg0.rosa.devshift.org`         |
 | Ephemeral   | Grafana        | `grafana.sre.us-east-1.eph-7e3884.rosa.devshift.net`  |
 | MC (int)    | ArgoCD         | `argocd.sre.mc01.us-east-1.int0.rosa.devshift.net`    |
 | Production  | Grafana        | `grafana.sre.us-east-1.prod.rosa.redhat.com`          |
