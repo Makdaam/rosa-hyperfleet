@@ -88,7 +88,7 @@ regional_cluster:
   node_instance_families: ["m8i-flex", "m7i-flex"]
   # @doc regional_cluster.telemeter_url Telemeter remote-write endpoint for billing metrics. Empty disables the billing Prometheus.
   # @used-by regional_cluster.telemeter_url _context
-  telemeter_url: ""
+  telemeter_url: "https://127.0.0.99/metrics/v1/receive"
   # @doc regional_cluster.telemeter_auth_type Authentication method for Telemeter remote-write: "bearer" or "oauth2".
   # @used-by regional_cluster.telemeter_auth_type _context
   telemeter_auth_type: "bearer"
