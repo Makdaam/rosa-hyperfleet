@@ -417,3 +417,69 @@ resource "aws_eks_pod_identity_association" "ebs_csi" {
     Name = "${local.cluster_id}-ebs-csi-pod-identity"
   })
 }
+
+# -----------------------------------------------------------------------------
+# ECR Credential Controller Role (Pod Identity)
+#
+# Allows the ecr-credential-controller pod to assume the cross-account ECR pull
+# role in the ECR-hosting account, call ecr:GetAuthorizationToken, and write
+# the resulting token into HostedCluster pull secrets so HCP dataplane pods can
+# pull images from ECR without public internet access.
+#
+# Only created when enable_ecr_credential_controller is true (opt-in per environment).
+# Each ECR-hosting account grants this role access via its own registry resource policy;
+# no cross-account role chain is needed.
+# -----------------------------------------------------------------------------
+
+resource "aws_iam_role" "ecr_credential_controller" {
+  count = var.enable_ecr_credential_controller ? 1 : 0
+
+  name        = "${local.cluster_id}-ecr-credential-controller"
+  description = "Allows the ECR credential controller pod to call ecr:GetAuthorizationToken and refresh HCP pull secrets"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "pods.eks.amazonaws.com" }
+      Action    = ["sts:AssumeRole", "sts:TagSession"]
+    }]
+  })
+
+  tags = merge(local.common_tags, {
+    Name = "${local.cluster_id}-ecr-credential-controller"
+  })
+}
+
+resource "aws_iam_role_policy" "ecr_credential_controller" {
+  count = var.enable_ecr_credential_controller ? 1 : 0
+
+  name = "ecr-get-authorization-token"
+  role = aws_iam_role.ecr_credential_controller[0].id
+
+  # ecr:GetAuthorizationToken is an account-level action and cannot be
+  # scoped to specific repositories — Resource: "*" is required.
+  # Repository-level pull access is granted by each ECR account's registry
+  # resource policy, not by this identity policy.
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = "ecr:GetAuthorizationToken"
+      Resource = "*"
+    }]
+  })
+}
+
+resource "aws_eks_pod_identity_association" "ecr_credential_controller" {
+  count = var.enable_ecr_credential_controller ? 1 : 0
+
+  cluster_name    = aws_eks_cluster.main.name
+  namespace       = "ecr-credential-controller"
+  service_account = "ecr-credential-controller"
+  role_arn        = aws_iam_role.ecr_credential_controller[0].arn
+
+  tags = merge(local.common_tags, {
+    Name = "${local.cluster_id}-ecr-credential-controller-pod-identity"
+  })
+}

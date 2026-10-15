@@ -1,0 +1,8 @@
+{{- if .Values.ecr.registries }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ecr-credential-controller
+  labels:
+    kubernetes.io/metadata.name: ecr-credential-controller
+{{- end }}

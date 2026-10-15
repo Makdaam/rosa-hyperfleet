@@ -1,0 +1,13 @@
+# Injected by ApplicationSet at runtime — defaults here for helm lint only
+global:
+  cluster_name: ""
+
+ecr:
+  # List of ECR registries to generate credentials for.
+  # Each entry: {account_id: "123456789012", region: "us-east-1"}
+  # Each ECR account must grant this cluster's ecr-credential-controller
+  # IAM role access via its registry resource policy.
+  registries: []
+
+# CronJob schedule — every 2h gives a 10h safety margin before the 12h token expires.
+schedule: "0 */2 * * *"

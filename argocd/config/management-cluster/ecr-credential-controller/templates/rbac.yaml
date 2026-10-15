@@ -1,0 +1,32 @@
+{{- if .Values.ecr.registries }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ecr-credential-controller
+rules:
+  # Enumerate HostedCluster namespaces and trigger reconciliation via annotation
+  - apiGroups: ["hypershift.openshift.io"]
+    resources: ["hostedclusters"]
+    verbs: ["list", "get", "watch", "patch"]
+  # Write pull-secret into every HostedCluster namespace
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "create", "update", "patch"]
+  # Read namespaces to verify they exist before writing secrets
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ecr-credential-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ecr-credential-controller
+subjects:
+  - kind: ServiceAccount
+    name: ecr-credential-controller
+    namespace: ecr-credential-controller
+{{- end }}

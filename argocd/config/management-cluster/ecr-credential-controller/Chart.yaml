@@ -1,0 +1,8 @@
+apiVersion: v2
+name: ecr-credential-controller
+description: Refreshes ECR authorization tokens and writes them as pull-secret into every HostedCluster namespace so HCP dataplane pods can pull from ECR without public internet access.
+type: application
+version: 0.1.0
+home: https://github.com/openshift-online/rosa-hyperfleet
+maintainers:
+  - name: ROSA HyperFleet Team

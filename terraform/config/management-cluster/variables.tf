@@ -149,6 +149,12 @@ variable "worker_node_root_volume_size" {
   default     = 50
 }
 
+variable "enable_ecr_credential_controller" {
+  description = "When true, provisions the ECR credential controller IAM role and Pod Identity association on the management cluster. Each ECR-hosting account must separately grant the role access via its registry resource policy."
+  type        = bool
+  default     = false
+}
+
 variable "zoa_table_name" {
   description = "DynamoDB executions table name (in RC account)"
   type        = string

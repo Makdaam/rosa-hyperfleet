@@ -1,0 +1,116 @@
+{{- if .Values.ecr.registries }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ecr-token-refresh
+  namespace: ecr-credential-controller
+spec:
+  schedule: {{ .Values.schedule | quote }}
+  # Prevent overlapping runs — if the previous job is still running, skip
+  concurrencyPolicy: Forbid
+  # Keep last 3 successful and 1 failed job for debugging
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      # Fail the job if it runs longer than 5 minutes
+      activeDeadlineSeconds: 300
+      template:
+        spec:
+          serviceAccountName: ecr-credential-controller
+          restartPolicy: OnFailure
+          containers:
+            - name: refresh
+              # amazon/aws-cli provides both aws-cli and jq-compatible tooling.
+              # kubectl is added via initContainer to keep the main image minimal.
+              image: public.ecr.aws/aws-cli/aws-cli:latest
+              env:
+                - name: REGISTRIES
+                  # JSON array of {account_id, region} objects passed from Helm values.
+                  value: {{ .Values.ecr.registries | toJson | quote }}
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  set -euo pipefail
+
+                  # Install kubectl (EKS-compatible version)
+                  curl -sLo /usr/local/bin/kubectl \
+                    "https://dl.k8s.io/release/$(curl -sL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+                  chmod +x /usr/local/bin/kubectl
+
+                  # Build combined dockerconfigjson from all configured ECR registries.
+                  # Pod Identity supplies AWS credentials automatically — no explicit
+                  # role assumption needed; the registry-level policies in each ECR
+                  # account allow this pod's identity to call GetAuthorizationToken.
+                  DOCKER_AUTHS="{}"
+
+                  for ROW in $(echo "${REGISTRIES}" | jq -r '.[] | @base64'); do
+                    ACCOUNT=$(echo "${ROW}" | base64 -d | jq -r '.account_id')
+                    REGION=$(echo "${ROW}"  | base64 -d | jq -r '.region')
+                    REGISTRY="${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com"
+
+                    echo "Fetching token for ${REGISTRY}..."
+                    # get-authorization-token supports --registry-ids for cross-account
+                    # access; get-login-password does not. Decode the base64 token and
+                    # strip the "AWS:" prefix to get just the password portion.
+                    TOKEN=$(aws ecr get-authorization-token \
+                      --region "${REGION}" \
+                      --registry-ids "${ACCOUNT}" \
+                      --query 'authorizationData[0].authorizationToken' \
+                      --output text | base64 -d | cut -d: -f2)
+
+                    AUTH=$(printf "AWS:%s" "${TOKEN}" | base64 -w0)
+                    DOCKER_AUTHS=$(echo "${DOCKER_AUTHS}" | jq \
+                      --arg registry "${REGISTRY}" \
+                      --arg auth "${AUTH}" \
+                      '.[$registry] = {"auth": $auth}')
+                  done
+
+                  DOCKER_CONFIG=$(jq -n --argjson auths "${DOCKER_AUTHS}" '{"auths": $auths}')
+
+                  # Write the combined pull-secret into every HostedCluster namespace
+                  # and trigger HyperShift reconciliation so it propagates to the
+                  # HCP namespace automatically without any manual intervention.
+                  HOSTED_CLUSTERS=$(kubectl get hostedcluster -A \
+                    -o jsonpath='{range .items[*]}{.metadata.namespace}/{.metadata.name}{"\n"}{end}')
+
+                  if [ -z "${HOSTED_CLUSTERS}" ]; then
+                    echo "No HostedClusters found — nothing to update."
+                    exit 0
+                  fi
+
+                  ENCODED=$(printf '%s' "${DOCKER_CONFIG}" | base64 -w0)
+
+                  for HC in ${HOSTED_CLUSTERS}; do
+                    NS=$(echo "${HC}" | cut -d/ -f1)
+                    HC_NAME=$(echo "${HC}" | cut -d/ -f2)
+                    echo "Updating pull-secret in namespace ${NS} (cluster: ${HC_NAME})..."
+
+                    # Use kubectl patch to update only the data field, preserving
+                    # all existing annotations — in particular HyperShift's
+                    # referenced-resource.hypershift.openshift.io/<hc-name> watch
+                    # annotation. kubectl apply would strip those annotations and
+                    # break automatic propagation to the HCP namespace.
+                    kubectl patch secret pull-secret \
+                      --namespace="${NS}" \
+                      --type=merge \
+                      -p "{\"data\":{\".dockerconfigjson\":\"${ENCODED}\"}}" \
+                    2>/dev/null || \
+                    kubectl create secret generic pull-secret \
+                      --namespace="${NS}" \
+                      --from-literal=.dockerconfigjson="${DOCKER_CONFIG}" \
+                      --type=kubernetes.io/dockerconfigjson
+
+                    # Annotate the HostedCluster to trigger HyperShift's
+                    # reconcilePullSecretSync, which propagates the updated secret
+                    # into the HCP namespace. This is necessary when the watch
+                    # annotation was stripped by a previous kubectl apply.
+                    kubectl annotate hostedcluster "${HC_NAME}" \
+                      --namespace="${NS}" \
+                      hypershift.openshift.io/ecr-pull-secret-refresh="$(date +%s)" \
+                      --overwrite
+                  done
+
+                  echo "ECR token refresh complete."
+{{- end }}

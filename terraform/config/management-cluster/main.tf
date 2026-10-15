@@ -53,6 +53,7 @@ module "management_cluster" {
 
   worker_node_ami_id           = var.worker_node_ami_id
   worker_node_root_volume_size = var.worker_node_root_volume_size
+  enable_ecr_credential_controller = var.enable_ecr_credential_controller
 }
 
 # =============================================================================

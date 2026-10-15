@@ -19,3 +19,5 @@ hypershift:
     region: us-east-1
   externalDns:
     domain: us-east-1.dev0.rosa.devshift.net
+ecr:
+  registries: []

@@ -14,5 +14,6 @@
   "zoa_runner_source_image": "quay.io/rrp-dev-ci/zoa-runner",
   "worker_node_ami_id": "ami-056d5e72aa5cf51f1",
   "worker_node_root_volume_size": 50,
+  "enable_ecr_credential_controller": false,
   "enable_bastion": true
 }

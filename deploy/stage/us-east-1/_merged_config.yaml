@@ -79,6 +79,15 @@ worker_node_ami:
 
 worker_node_root_volume_size: 50
 
+ecr:
+  # @doc ecr.enabled Enable the ECR credential controller on management clusters. When true, Terraform creates the IAM role and Pod Identity association; each ECR-hosting account must grant the role access via its registry resource policy.
+  # @used-by ecr.enabled _context
+  # @used-by ecr.enabled pipeline-management-cluster-inputs/terraform.json.j2
+  enabled: false
+  # @doc ecr.registries List of ECR registries to generate credentials for. Each entry must have account_id and region. The ECR credential controller obtains a 12h token per registry and combines them into a single pull-secret in every HostedCluster namespace.
+  # @used-by ecr.registries _context
+  registries: []
+
 regional_cluster:
   # @doc regional_cluster.enable_bastion Enable bastion host for regional cluster access.
   # @used-by regional_cluster.enable_bastion pipeline-regional-cluster-inputs/terraform.json.j2
@@ -215,6 +224,12 @@ applications:
         # @doc applications.management-cluster.hypershift.externalDns.domain External DNS domain filter for HyperShift. Should match the regional zone so external-dns discovers zone shards.
         # @used-by applications.management-cluster.hypershift.externalDns.domain _context
         domain: "{% if dns.domain %}{{ deployment_name }}.{{ dns.domain }}{% endif %}"
+    # ecr-credential-controller chart values — must be top-level (no subchart wrapper)
+    # so .Values.ecr.registries resolves correctly in the Helm templates.
+    ecr:
+      # @doc applications.management-cluster.ecr.registries List of ECR registries ({account_id, region}) to generate credentials for. Empty list disables the CronJob.
+      # @used-by applications.management-cluster.ecr.registries _context
+      registries: "{{ ecr.registries }}"
   regional-cluster:
     eksNodePool:
       # @doc applications.regional-cluster.eksNodePool.instanceFamilies Instance families for the regional Karpenter NodePool.

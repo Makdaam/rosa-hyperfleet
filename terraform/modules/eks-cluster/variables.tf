@@ -68,3 +68,9 @@ variable "worker_node_root_volume_size" {
   default     = 50
 }
 
+variable "enable_ecr_credential_controller" {
+  description = "When true, creates the ECR credential controller IAM role (with ecr:GetAuthorizationToken) and Pod Identity association. Each ECR-hosting account must separately grant this role pull access via an ECR registry resource policy."
+  type        = bool
+  default     = false
+}
+
